@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planning des rendez-vous</title>
+    <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
+</head>
+<body class="dark-mode">
+    <!-- Entête -->
+    {% include 'header.html' %}
+    <div class="container">
+        <h1 class="text-center my-5">Planning des rendez-vous</h1>
+        <!-- Tableau -->
+        <div class="row">
+            <div class="col">
+                <table class="table table-bordered text-center">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col" onclick="sortTable(0)">Nom <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(1)">Prénom <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(2)">Sexe <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(3)">Date de naissance <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(4)">Date du rendez-vous <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(5)">Heure <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td>{{ appointment.patient.name }}</td>
+                            <td>{{ appointment.patient.first_name }}</td>
+                            <td>{{ appointment.patient.sex }}</td>
+                            <td>{{ appointment.patient.date_of_birth }}</td>
+                            <td>{{ appointment.appointment_time.strftime('%d-%m-%Y')  }}</td>
+                            <td>{{ appointment.appointment_time.strftime('%H:%M') }}</td>
+                            <td><button onclick="deleteAppointment('{{ appointment.id }}', '{{ appointment.patient.name }}', '{{ appointment.appointment_time }}')">Corbeille</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Pagination -->
+        <div class="row">
+            <div class="col">
+                <div class="pagination">
+                    <label for="items-per-page">Elements par page :</label>
+                    <select id="items-per-page">
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="500">500</option>
+                    </select>
+                    <span id="page-info">
+                        {% if appointments|length > 0 %}
+                            {% set start_index = (appointments|length > 0) and ((1 - 1) * 50 + 1) or 0 %}
+                            {% set end_index = (appointments|length > 0) and (1 * 50) or 0 %}
+                            {{ start_index }} - {{ end_index }} sur {{ total_appointments }}
+                        {% else %}
+                            0 - 0 sur 0
+                        {% endif %}
+                    </span>
+                    <button id="prev-page">&lt;</button>
+                    <button id="next-page">&gt;</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script> const totalAppointments = "{{ total_appointments }}"; </script>
+    <!-- Script JS pour la pagination -->
+    <script src="{{ url_for('static', filename='pagination.js') }}"></script>
+    <!-- Inclusion du fichier JavaScript externe -->
+    <script src="{{ url_for('static', filename='sort.js') }}"></script>
+    <script>
+        function deleteAppointment(appointmentId, patientName, appointmentDate) {
+            // Construit le message de confirmation avec les informations du rendez-vous
+            const confirmationMessage = `Confirmez-vous la suppression du rendez-vous pour ${patientName} le ${appointmentDate} ?`;
+            
+            // Demande une confirmation avant de supprimer le rendez-vous
+            if (confirm(confirmationMessage)) {
+                // Envoie une requête DELETE à l'API pour supprimer le rendez-vous avec l'ID spécifié
+                fetch(`/appointments/${appointmentId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Recharge la page après la suppression
+                        window.location.reload();
+                    } else {
+                        // Gère les erreurs de suppression
+                        console.error('Erreur lors de la suppression du rendez-vous');
+                    }
+                })
+                .catch(error => console.error('Erreur réseau :', error));
+            }
+        }
+    </script>
+    <script>
+        function showCalendar(date) {
+            // Vous pouvez implémenter ici la logique pour afficher un calendrier avec la date passée en paramètre
+            // Par exemple, vous pouvez utiliser une bibliothèque JavaScript comme FullCalendar.js pour afficher un calendrier interactif
+            alert('Afficher le calendrier pour la date : ' + date);
+        }
+    </script>
+</body>
+</html>

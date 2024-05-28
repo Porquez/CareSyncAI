@@ -1,0 +1,72 @@
+/* Style pour le tableau */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid #ddd;
+    /* Ajoute un effet de relief sur le contour du tableau */
+    background-color: #333;
+    /* Fond gris foncé */
+    color: #fff;
+    /* Couleur du texte blanc */
+}
+
+/* Style pour les cellules du tableau */
+th,
+td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #454d55;
+    /* Fond plus sombre pour les en-têtes */
+    cursor: pointer;
+    /* Curseur pour indiquer que les en-têtes sont cliquables */
+    /* Ajout d'un style "relief" */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Style pour les lignes impaires */
+tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+/* Style pour les boutons de tri */
+.sort-btn {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+/* Style pour les flèches dans les boutons de tri */
+.sort-btn i {
+    margin-left: 5px;
+}
+
+/* Pagination */
+.pagination {
+    text-align: center;
+    /* Centrer le contenu */
+    margin-top: 20px;
+    /* Espacement depuis le tableau */
+    color: #fff;
+    /* Couleur du texte */
+}
+
+.bg-green {
+    background-color: #00ff00;
+    /* Couleur verte */
+}
+
+.bg-yellow {
+    background-color: #ffff00;
+    /* Couleur jaune */
+}
+
+.bg-red {
+    background-color: #ff0000;
+    /* Couleur rouge */
+}

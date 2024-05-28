@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des patients</title>
+    <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center my-5">Liste des patients</h1>
+        <div class="row">
+            <div class="col">
+                <table class="table table-bordered text-center">
+                    <thead>
+                        <tr>
+                            <th scope="col">Nom</th>
+                            <th scope="col">Prénom</th>
+                            <th scope="col">Date de naissance</th>
+                            <th scope="col">Sexe</th>
+                            <th scope="col">Numéro de sécurité sociale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr>
+                            <td>{{ patient.name }}</td>
+                            <td>{{ patient.first_name }}</td>
+                            <td>{{ patient.date_of_birth }}</td>
+                            <td>{{ patient.sex }}</td>
+                            <td>{{ patient.social_security_number }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
