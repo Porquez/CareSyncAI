@@ -70,3 +70,13 @@ tr:nth-child(odd) {
     background-color: #ff0000;
     /* Couleur rouge */
 }
+
+.appointment-passed {
+    background-color: #f2dede;
+    /* Couleur de fond pour les rendez-vous dépassés */
+}
+
+.table tbody tr td:nth-child(7) {
+    text-align: center;
+    /* Centrer le contenu de la colonne */
+}

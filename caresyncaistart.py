@@ -1,4 +1,5 @@
 import sqlite3
+import json
 import tkinter as tk
 from tkinter import ttk, messagebox,OptionMenu
 from datetime import datetime, timedelta
@@ -23,7 +24,7 @@ class DatabaseManager:
                             place_of_birth TEXT, social_security_number TEXT, medical_history TEXT, medications TEXT, 
                             allergies TEXT, emergency_contacts TEXT)''')
         self.cur.execute('''CREATE TABLE IF NOT EXISTS appointments
-                            (id INTEGER PRIMARY KEY, caregiver_id INTEGER, patient_id INTEGER, 
+                            (id INTEGER PRIMARY KEY, caregiver_id INTEGER, health_professional_id INTEGER, patient_id INTEGER, 
                             appointment_time TEXT, duration TEXT, confirmed BOOLEAN)''')
         self.cur.execute('''CREATE TABLE IF NOT EXISTS health_professionals
                             (id INTEGER PRIMARY KEY AUTOINCREMENT, prefix TEXT, first_name TEXT, last_name TEXT, rpps INTEGER UNIQUE, 
@@ -430,6 +431,12 @@ class CareSyncApp:
         pass
 
     def add_patient(self):
+         # Lecture du fichier de configuration JSON
+        config_path = os.path.join(os.getcwd(), 'conf', 'config.json')
+        with open(config_path, 'r') as config_file:
+            config = json.load(config_file)
+       
+
         name = self.entry_patient_name.get().strip()
         first_name = self.entry_patient_first_name.get().strip()
         date_of_birth = self.entry_patient_dob.get().strip()  # Assurez-vous que vous obtenez la date de naissance au format correct
@@ -466,7 +473,8 @@ class CareSyncApp:
             }
 
             # URL de l'API de création de patient
-            api_url = "http://127.0.0.1:8000/add_patient"
+             # Récupération de l'adresse URL et du port de l'API de création de patient
+            api_url = f"http://{config.get('http_url')}:{config.get('port')}/add_patient"
 
             # Envoyer la requête POST à l'API
             response = requests.post(api_url, json=patient_data)

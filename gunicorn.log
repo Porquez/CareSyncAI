@@ -1,0 +1,319 @@
+[2024-05-29 16:43:55 +0200] [15411] [INFO] Starting gunicorn 22.0.0
+[2024-05-29 16:43:55 +0200] [15411] [INFO] Listening at: http://127.0.0.1:8000 (15411)
+[2024-05-29 16:43:55 +0200] [15411] [INFO] Using worker: sync
+[2024-05-29 16:43:55 +0200] [15413] [INFO] Booting worker with pid: 15413
+DEBUG:root:Accès à la page d'accueil
+ERROR:app:Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: appointments
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/syst/CareSyncAI/app.py", line 166, in index
+    appointments = Appointment.query.order_by(Appointment.appointment_time).all()
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2673, in all
+    return self._iter().all()  # type: ignore
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2827, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2236, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/context.py", line 293, in orm_execute_statement
+    result = conn.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: appointments
+[SQL: SELECT appointments.id AS appointments_id, appointments.appointment_time AS appointments_appointment_time, appointments.patient_id AS appointments_patient_id, appointments.caregiver_id AS appointments_caregiver_id, appointments.health_professional_id AS appointments_health_professional_id 
+FROM appointments ORDER BY appointments.appointment_time]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+DEBUG:root:Accès à la page d'accueil
+ERROR:app:Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: appointments
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/syst/CareSyncAI/app.py", line 166, in index
+    appointments = Appointment.query.order_by(Appointment.appointment_time).all()
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2673, in all
+    return self._iter().all()  # type: ignore
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2827, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2236, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/context.py", line 293, in orm_execute_statement
+    result = conn.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: appointments
+[SQL: SELECT appointments.id AS appointments_id, appointments.appointment_time AS appointments_appointment_time, appointments.patient_id AS appointments_patient_id, appointments.caregiver_id AS appointments_caregiver_id, appointments.health_professional_id AS appointments_health_professional_id 
+FROM appointments ORDER BY appointments.appointment_time]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+DEBUG:root:Accès à la page d'accueil
+ERROR:app:Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: appointments
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/syst/CareSyncAI/app.py", line 166, in index
+    appointments = Appointment.query.order_by(Appointment.appointment_time).all()
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2673, in all
+    return self._iter().all()  # type: ignore
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2827, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2236, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/context.py", line 293, in orm_execute_statement
+    result = conn.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: appointments
+[SQL: SELECT appointments.id AS appointments_id, appointments.appointment_time AS appointments_appointment_time, appointments.patient_id AS appointments_patient_id, appointments.caregiver_id AS appointments_caregiver_id, appointments.health_professional_id AS appointments_health_professional_id 
+FROM appointments ORDER BY appointments.appointment_time]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+DEBUG:root:Accès à la page d'accueil
+ERROR:app:Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: appointments
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/syst/CareSyncAI/app.py", line 166, in index
+    appointments = Appointment.query.order_by(Appointment.appointment_time).all()
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2673, in all
+    return self._iter().all()  # type: ignore
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2827, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2236, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/context.py", line 293, in orm_execute_statement
+    result = conn.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: appointments
+[SQL: SELECT appointments.id AS appointments_id, appointments.appointment_time AS appointments_appointment_time, appointments.patient_id AS appointments_patient_id, appointments.caregiver_id AS appointments_caregiver_id, appointments.health_professional_id AS appointments_health_professional_id 
+FROM appointments ORDER BY appointments.appointment_time]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+DEBUG:root:Accès à la page d'accueil
+ERROR:app:Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: appointments
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/syst/CareSyncAI/app.py", line 166, in index
+    appointments = Appointment.query.order_by(Appointment.appointment_time).all()
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2673, in all
+    return self._iter().all()  # type: ignore
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2827, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2236, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/context.py", line 293, in orm_execute_statement
+    result = conn.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: appointments
+[SQL: SELECT appointments.id AS appointments_id, appointments.appointment_time AS appointments_appointment_time, appointments.patient_id AS appointments_patient_id, appointments.caregiver_id AS appointments_caregiver_id, appointments.health_professional_id AS appointments_health_professional_id 
+FROM appointments ORDER BY appointments.appointment_time]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+DEBUG:root:Accès à la page d'accueil
+ERROR:app:Exception on / [GET]
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: appointments
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 1473, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 882, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 880, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/syst/.local/lib/python3.8/site-packages/flask/app.py", line 865, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+  File "/home/syst/CareSyncAI/app.py", line 166, in index
+    appointments = Appointment.query.order_by(Appointment.appointment_time).all()
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2673, in all
+    return self._iter().all()  # type: ignore
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/query.py", line 2827, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+    return self._execute_internal(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/session.py", line 2236, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/orm/context.py", line 293, in orm_execute_statement
+    result = conn.execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+    return meth(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "/home/syst/.local/lib/python3.8/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: appointments
+[SQL: SELECT appointments.id AS appointments_id, appointments.appointment_time AS appointments_appointment_time, appointments.patient_id AS appointments_patient_id, appointments.caregiver_id AS appointments_caregiver_id, appointments.health_professional_id AS appointments_health_professional_id 
+FROM appointments ORDER BY appointments.appointment_time]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+[2024-05-29 16:44:50 +0200] [15413] [INFO] Worker exiting (pid: 15413)
+[2024-05-29 16:44:50 +0200] [15411] [INFO] Handling signal: term
+[2024-05-29 16:44:50 +0200] [15411] [INFO] Shutting down: Master

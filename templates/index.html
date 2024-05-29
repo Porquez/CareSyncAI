@@ -17,25 +17,35 @@
                 <table class="table table-bordered text-center">
                     <thead class="table-dark">
                         <tr>
-                            <th scope="col" onclick="sortTable(0)">Nom <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(1)">Prénom <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(2)">Sexe <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(3)">Date de naissance <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(4)">Date du rendez-vous <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(5)">Heure <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(0)">Médecin <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(1)">Patient <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(2)">Prénom <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(3)">Sexe <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(4)">Date de naissance <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(5)">Date du rendez-vous <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(6)">Heure <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col">Statut</th> <!-- Nouvelle colonne pour le statut du rendez-vous -->
                             <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for appointment in appointments %}
-                        <tr>
+                        <tr {% if appointment.appointment_time < now %} class="appointment-passed" {% endif %}>
+                            <td>{{ appointment.health_professional_name }}</td>
                             <td>{{ appointment.patient.name }}</td>
                             <td>{{ appointment.patient.first_name }}</td>
                             <td>{{ appointment.patient.sex }}</td>
                             <td>{{ appointment.patient.date_of_birth }}</td>
-                            <td>{{ appointment.appointment_time.strftime('%d-%m-%Y')  }}</td>
+                            <td>{{ appointment.appointment_time.strftime('%d-%m-%Y') }}</td>
                             <td>{{ appointment.appointment_time.strftime('%H:%M') }}</td>
-                            <td><button onclick="deleteAppointment('{{ appointment.id }}', '{{ appointment.patient.name }}', '{{ appointment.appointment_time }}')">Corbeille</button></td>
+                            <!-- Nouvelle colonne pour le statut du rendez-vous -->
+                            <td>
+                                {% if appointment.appointment_time < now %} <i class="fa fa-flag" style="color: red;"></i> Rendez-vous dépassé
+                                    {% endif %}
+                            </td>
+                            <td><button
+                                    onclick="deleteAppointment('{{ appointment.id }}', '{{ appointment.patient.name }}', '{{ appointment.appointment_time }}')">Corbeille</button>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -61,8 +71,8 @@
                             0 - 0 sur 0
                         {% endif %}
                     </span>
-                    <button id="prev-page">&lt;</button>
-                    <button id="next-page">&gt;</button>
+                    <button class="prev-page">&lt;</button>
+                    <button class="next-page">&gt;</button>
                 </div>
             </div>
         </div>
@@ -73,22 +83,25 @@
     <!-- Inclusion du fichier JavaScript externe -->
     <script src="{{ url_for('static', filename='sort.js') }}"></script>
     <script>
-        function deleteAppointment(appointmentId, patientName, appointmentDate) {
-            // Construit le message de confirmation avec les informations du rendez-vous
-            const confirmationMessage = `Confirmez-vous la suppression du rendez-vous pour ${patientName} le ${appointmentDate} ?`;
-            
-            // Demande une confirmation avant de supprimer le rendez-vous
-            if (confirm(confirmationMessage)) {
-                // Envoie une requête DELETE à l'API pour supprimer le rendez-vous avec l'ID spécifié
-                fetch(`/appointments/${appointmentId}`, {
-                    method: 'DELETE'
-                })
+     function deleteAppointment(appointmentId, patientName, appointmentDate) {
+        // Construit le message de confirmation avec les informations du rendez-vous
+        const confirmationMessage = `Confirmez-vous la suppression du rendez-vous pour ${patientName} le ${appointmentDate} ?`;
+
+        // Demande une confirmation avant de supprimer le rendez-vous
+        if (confirm(confirmationMessage)) {
+            // Envoie une requête DELETE à l'API pour supprimer le rendez-vous avec l'ID spécifié
+            fetch(`/appointments/${appointmentId}`, {
+                method: 'DELETE'
+            })
                 .then(response => {
                     if (response.ok) {
                         // Recharge la page après la suppression
                         window.location.reload();
+                    } else if (response.status === 403) {
+                        // Affiche un message d'erreur si la suppression est refusée
+                        alert('Impossible de supprimer le rendez-vous. Le délai de suppression est écoulé.');
                     } else {
-                        // Gère les erreurs de suppression
+                        // Gère les autres erreurs de suppression
                         console.error('Erreur lors de la suppression du rendez-vous');
                     }
                 })

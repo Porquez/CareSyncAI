@@ -38,8 +38,8 @@ document.addEventListener("DOMContentLoaded", function() {
     let currentPage = 1;
     let itemsPerPage = 50; // Valeur par défaut
     const totalItems = totalAppointments; // Utilisez la variable JavaScript définie dans index.html
-    const prevButton = document.getElementById('prev-page');
-    const nextButton = document.getElementById('next-page');
+    const prevButton = document.querySelector('.prev-page');
+    const nextButton = document.querySelector('.next-page');
     const itemsPerPageSelect = document.getElementById('items-per-page');
 
     // Afficher les éléments par page lors de la sélection

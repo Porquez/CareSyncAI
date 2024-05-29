@@ -1,0 +1,8 @@
+{
+  "app_dir": "/home/syst/CareSyncAI",
+  "db_filename": "care_sync.db",
+  "http_url": "http://127.0.1.1",
+  "https_url": "https://127.0.1.1",
+  "port": 8000,
+  "suppression_delai_heures": 24
+}
