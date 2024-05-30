@@ -1,6 +1,15 @@
 #!/bin/bash
 
-# V�rification des param�tres
+# Ce script prend quatre paramètres en entrée :
+#   <nom_de_votre_application> : Le nom de votre application.
+#    <URL_de_votre_dépôt> : L'URL de votre dépôt Git où se trouve le code de votre application.
+#    <votre_module> : Le nom du module Python qui contient l'instance de l'application Flask.
+#    <votre_domaine> : Le domaine sur lequel votre application sera accessible.
+
+# ./deploy.sh mon_application https://github.com/utilisateur/mon_application mon_module mon_domaine.com
+
+
+# Vérification des paramétres
 if [ "$#" -ne 4 ]; then
     echo "Usage: $0 <nom_de_votre_application> <URL_de_votre_depot> <votre_module> <votre_domaine>"
     exit 1
@@ -54,7 +63,7 @@ EOF
 # Activation du fichier de configuration Nginx
 sudo ln -s /etc/nginx/sites-available/$app_name /etc/nginx/sites-enabled/$app_name
 
-# V�rification de la configuration Nginx
+# Verification de la configuration Nginx
 sudo nginx -t
 
 # Redemarrage de Nginx

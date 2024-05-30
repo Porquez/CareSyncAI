@@ -1,167 +1,24 @@
+"""
+CareSyncApp.py: Ce module gère l'interface utilisateur de l'application de synchronisation des soins.
+"""
+import os
 import sqlite3
 import json
-import tkinter as tk
-from tkinter import ttk, messagebox,OptionMenu
-from datetime import datetime, timedelta
-from tkcalendar import Calendar,DateEntry
-import random
 import requests
-from PIL import ImageTk, Image  # Importez ImageTk et Image depuis PIL
-
-from main import simulate_virtual_assistant
-
-class DatabaseManager:
-    def __init__(self, db_name):
-        self.conn = sqlite3.connect(db_name)
-        self.cur = self.conn.cursor()
-        self.create_tables()
-
-    def create_tables(self):
-        self.cur.execute('''CREATE TABLE IF NOT EXISTS caregivers
-                            (id INTEGER PRIMARY KEY, name TEXT)''')
-        self.cur.execute('''CREATE TABLE IF NOT EXISTS patients
-                            (id INTEGER PRIMARY KEY, name TEXT, first_name TEXT, date_of_birth TEXT, sex TEXT, prefix TEXT, 
-                            place_of_birth TEXT, social_security_number TEXT, medical_history TEXT, medications TEXT, 
-                            allergies TEXT, emergency_contacts TEXT)''')
-        self.cur.execute('''CREATE TABLE IF NOT EXISTS appointments
-                            (id INTEGER PRIMARY KEY, caregiver_id INTEGER, health_professional_id INTEGER, patient_id INTEGER, 
-                            appointment_time TEXT, duration TEXT, confirmed BOOLEAN)''')
-        self.cur.execute('''CREATE TABLE IF NOT EXISTS health_professionals
-                            (id INTEGER PRIMARY KEY AUTOINCREMENT, prefix TEXT, first_name TEXT, last_name TEXT, rpps INTEGER UNIQUE, 
-                            name TEXT, specialty TEXT)''')
-        self.conn.commit()
-
-    def add_caregiver(self, name):
-        try:
-            self.cur.execute("INSERT INTO caregivers (name) VALUES (?)", (name,))
-            self.conn.commit()
-            return self.cur.lastrowid
-        except sqlite3.Error as e:
-            print(f"An error occurred: {e}")
-            self.conn.rollback()
-
-    def add_patient(self, name, first_name, date_of_birth, sex, prefix, place_of_birth, social_security_number, 
-                    medical_history, medications, allergies, emergency_contacts):
-        try:
-            self.cur.execute("INSERT INTO patients (name, first_name, date_of_birth, sex, prefix, place_of_birth, social_security_number, \
-            medical_history, medications, allergies, emergency_contacts) \
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (name, first_name, date_of_birth, sex, prefix, place_of_birth, 
-                                                       social_security_number, medical_history, medications, allergies, 
-                                                       emergency_contacts))
-            self.conn.commit()
-            return self.cur.lastrowid
-        except sqlite3.Error as e:
-            print(f"An error occurred: {e}")
-            self.conn.rollback()
-
-    def add_health_professional(self, prefix, first_name, last_name, rpps, specialty):
-        try:
-            name = f"{prefix} {first_name} {last_name}"
-            self.cur.execute("INSERT INTO health_professionals (prefix, first_name, last_name, rpps, name, specialty) \
-            VALUES (?, ?, ?, ?, ?, ?)", (prefix, first_name, last_name, rpps, name, specialty))
-            self.conn.commit()
-            return self.cur.lastrowid
-        except sqlite3.Error as e:
-            print(f"An error occurred: {e}")
-            self.conn.rollback()
-
-    def check_conflicts(self, professional_id, appointment_time, appointment_duration):
-        duration_seconds = int(appointment_duration.total_seconds())
-        appointment_end_time = appointment_time + timedelta(seconds=duration_seconds)
-        self.cur.execute('''
-        SELECT * FROM appointments WHERE caregiver_id = ? AND (
-        (appointment_time < ? AND datetime(appointment_time, '+' || duration || ' seconds') > ?)
-        )
-        ''', (professional_id, appointment_end_time, appointment_time))
-        return self.cur.fetchall()
-        
-    
-    def schedule_appointment(self, professional_id, patient_id, appointment_time, appointment_duration):
-        try:
-            conflicts = self.check_conflicts(professional_id, appointment_time, appointment_duration)
-            if conflicts:
-                return "Conflit détecté avec d'autres rendez-vous. Veuillez choisir un autre créneau horaire."
-            appointment_time_str = appointment_time.strftime("%Y-%m-%d %H:%M:%S")
-            duration_str = str(int(appointment_duration.total_seconds()))
-            self.cur.execute("INSERT INTO appointments (caregiver_id, patient_id, appointment_time, duration, confirmed) \
-            VALUES (?, ?, ?, ?, ?)", (professional_id, patient_id, appointment_time_str, duration_str, False))
-            self.conn.commit()
-            return self.cur.lastrowid
-        except sqlite3.Error as e:
-            print(f"An error occurred: {e}")
-            self.conn.rollback()
-        
-    def confirm_appointment(self, appointment_id):
-        try:
-            self.cur.execute("UPDATE appointments SET confirmed = ? WHERE id = ?", (True, appointment_id))
-            self.conn.commit()
-        except sqlite3.Error as e:
-            print(f"An error occurred: {e}")
-            self.conn.rollback()
-
-    def cancel_appointment(self, appointment_id):
-        try:
-            self.cur.execute("DELETE FROM appointments WHERE id = ?", (appointment_id,))
-            self.conn.commit()
-        except sqlite3.Error as e:
-            print(f"An error occurred: {e}")
-
-    def get_patient_details(self, patient_id):
-        try:
-            self.cur.execute("SELECT * FROM patients WHERE id = ?", (patient_id,))
-            return self.cur.fetchone()
-        except sqlite3.Error as e:
-            print(f"An error occurred: {e}")
-
-    def get_appointments_for_date(self, date):
-        try:
-            start_date_str = date.strftime("%Y-%m-%d 00:00:00")
-            end_date_str = date.strftime("%Y-%m-%d 23:59:59")
-            self.cur.execute("SELECT * FROM appointments WHERE appointment_time BETWEEN ? AND ?", (start_date_str, end_date_str))
-            return self.cur.fetchall()
-        except sqlite3.Error as e:
-            print(f"An error occurred: {e}")
-
-    def close_connection(self):
-        self.cur.close()
-        self.conn.close()
-
-class CareSyncAI:
-    def __init__(self, db_name):
-        self.db_manager = DatabaseManager(db_name)
-
-    def add_caregiver(self, name):
-        return self.db_manager.add_caregiver(name)
-
-    def add_patient(self, name, first_name, date_of_birth, sex, prefix, place_of_birth, social_security_number, 
-                    medical_history, medications, allergies, emergency_contacts):
-        return self.db_manager.add_patient(name, first_name, date_of_birth, sex, prefix, place_of_birth, 
-                                           social_security_number, medical_history, medications, allergies, emergency_contacts)
-
-    def schedule_appointment(self, caregiver_id, patient_id, appointment_time, appointment_duration):
-        appointment_id = self.db_manager.schedule_appointment(caregiver_id, patient_id, appointment_time, appointment_duration)
-        return f"Rendez-vous programmé avec succés. ID: {appointment_id}"
-
-    def confirm_appointment(self, appointment_id):
-        self.db_manager.confirm_appointment(appointment_id)
-        return "Rendez-vous confirmé."
-
-    def cancel_appointment(self, appointment_id):
-        self.db_manager.cancel_appointment(appointment_id)
-        return "Rendez-vous annulé avec succés."
-
-    def get_patient_details(self, patient_id):
-        return self.db_manager.get_patient_details(patient_id)
-
-    def get_appointments_for_date(self, date):
-        return self.db_manager.get_appointments_for_date(date)
+import tkinter as tk
+import tkinter.ttk as ttk  # Importez ttk
+from tkinter import messagebox, OptionMenu
+from datetime import datetime, timedelta
+from tkcalendar import Calendar, DateEntry
+import random
+from PIL import ImageTk, Image
+from DatabaseManager import DatabaseManager
 
 class CareSyncApp:
-    def __init__(self, master):
-        
+    def __init__(self, master, db_name):
         self.master = master
         self.master.title("CareSyncAI")
-        self.db_manager = DatabaseManager("care_sync.db")
+        self.db_manager = DatabaseManager(db_name)
         
         # Définir la taille de la fenêtre sur la taille maximale de l'écran
         width = self.master.winfo_screenwidth()
@@ -176,14 +33,8 @@ class CareSyncApp:
         self.message_display = tk.Text(self.frame_status_bar, height=10, width=100)
         self.message_display.pack(fill="both", expand=True)
         
-        # Charger l'image du logo
-        #logo_img = tk.PhotoImage(file="logo.jpg")
-
-        # Définir l'icône de la fenêtre principale avec le logo chargé
-        #master.iconphoto(False, logo_img)
-
         # Chargement de l'image du logo
-        logo_img = Image.open("logo.jpg")
+        logo_img = Image.open("./images/logo.jpg")
         logo_img = logo_img.resize((550, 550), Image.LANCZOS)  # Utilisez LANCZOS pour le redimensionnement
         self.logo = ImageTk.PhotoImage(logo_img)
 
@@ -490,43 +341,3 @@ class CareSyncApp:
         except Exception as e:
             # Afficher un message d'erreur détaillé
             messagebox.showerror("Erreur", f"Une erreur est survenue lors de l'ajout du patient: {e}")
-
-class VirtualPlanningAssistant:
-    def __init__(self, db_manager):
-        self.db_manager = db_manager
-
-    def auto_schedule_appointment(self, patient_id):
-        now = datetime.now()
-        random_days = timedelta(days=random.randint(1, 7))
-        random_hours = timedelta(hours=random.randint(8, 17))
-        appointment_time = (now + random_days + random_hours).replace(minute=0, second=0)
-        appointment_duration = timedelta(hours=1)
-        caregiver_id = random.choice(self.db_manager.get_caregivers())['id']
-        return self.db_manager.schedule_appointment(caregiver_id, patient_id, appointment_time, appointment_duration)
-
-    def send_confirmation(self, appointment_id):
-        print(f"Rendez-vous ID {appointment_id} confirmé avec le patient.")
-
-    def handle_cancellation(self, appointment_id):
-        self.db_manager.cancel_appointment(appointment_id)
-        print(f"Rendez-vous ID {appointment_id} annulé. Proposition d'une nouvelle date.")
-
-if __name__ == "__main__":
-    # Lancement de l'interface utilisateur
-    root = tk.Tk()
-    app = CareSyncApp(root)
-
-    # Simuler l'Assistant Virtuel de Planification avant de lancer l'interface utilisateur
-    # Commentez cette ligne si la simulation n'est pas nécessaire
-    # simulate_virtual_assistant()
-
-    # Initialisation de la base de données et des gestionnaires après la simulation
-    db_name = "care_sync.db"
-    care_sync_ai = CareSyncAI(db_name)
-    virtual_planning_assistant = VirtualPlanningAssistant(care_sync_ai.db_manager)
-
-    # Attribution des objets care_sync_ai et virtual_planning_assistant à l'application
-    app.care_sync_ai = care_sync_ai
-    app.virtual_planning_assistant = virtual_planning_assistant
-
-    root.mainloop()

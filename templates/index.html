@@ -38,7 +38,6 @@
                             <td>{{ appointment.patient.date_of_birth }}</td>
                             <td>{{ appointment.appointment_time.strftime('%d-%m-%Y') }}</td>
                             <td>{{ appointment.appointment_time.strftime('%H:%M') }}</td>
-                            <!-- Nouvelle colonne pour le statut du rendez-vous -->
                             <td>
                                 {% if appointment.appointment_time < now %} <i class="fa fa-flag" style="color: red;"></i> Rendez-vous dépassé
                                     {% endif %}

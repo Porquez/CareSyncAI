@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Chemin vers le r�pertoire de l'application Flask
+# Chemin vers le répertoire de l'application Flask
 APP_DIR=`pwd`
 
 # Nom du fichier de log pour Gunicorn
