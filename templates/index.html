@@ -18,13 +18,14 @@
                     <thead class="table-dark">
                         <tr>
                             <th scope="col" onclick="sortTable(0)">Médecin <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(1)">Patient <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(1)">Nom Patient <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
                             <th scope="col" onclick="sortTable(2)">Prénom <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
                             <th scope="col" onclick="sortTable(3)">Sexe <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
                             <th scope="col" onclick="sortTable(4)">Date de naissance <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(5)">Date du rendez-vous <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(6)">Heure <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col">Statut</th> <!-- Nouvelle colonne pour le statut du rendez-vous -->
+                            <th scope="col" onclick="sortTable(5)">Age <button class="sort-btn"><i class="fa fa-sort"></i></button></th></th> 
+                            <th scope="col" onclick="sortTable(6)">Date du rendez-vous <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(7)">Heure <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(8)">Statut <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
                             <th scope="col">Actions</th>
                         </tr>
                     </thead>
@@ -39,11 +40,23 @@
                             <td>{{ appointment.appointment_time.strftime('%d-%m-%Y') }}</td>
                             <td>{{ appointment.appointment_time.strftime('%H:%M') }}</td>
                             <td>
-                                {% if appointment.appointment_time < now %} <i class="fa fa-flag" style="color: red;"></i> Rendez-vous dépassé
-                                    {% endif %}
+                                <select onchange="changeStatus('{{ appointment.id }}', this.value)">
+                                    <option value="A venir" {% if appointment.status=='A venir' %} selected {% endif %}>A venir</option>
+                                    <option value="Absent non-excusé" {% if appointment.status=='Absent non-excusé' %} selected {% endif %}>Absent
+                                        non-excusé</option>
+                                    <option value="Absent excusé" {% if appointment.status=='Absent excusé' %} selected {% endif %}>Absent excusé
+                                    </option>
+                                    <option value="Vu" {% if appointment.status=='Vu' %} selected {% endif %}>Vu</option>
+                                     <option value="En salle d'attente" {% if appointment.status=='En salle d\' attente' %} selected {% endif %}>En salle d'attente</option>
+                                </select>
                             </td>
-                            <td><button
-                                    onclick="deleteAppointment('{{ appointment.id }}', '{{ appointment.patient.name }}', '{{ appointment.appointment_time }}')">Corbeille</button>
+                            <td>
+                                {% if appointment.appointment_time < now %} <i class="fa fa-flag" style="color: red;"></i> Rendez-vous dépassée
+                                    {% else %} <!-- Ajouter un bouton de suppression pour les rendez-vous à venir -->
+                                    <button
+                                        onclick="deleteAppointment('{{ appointment.id }}', '{{ appointment.patient.name }}', '{{ appointment.appointment_time }}')"><i
+                                            class="fa fa-trash"></i></button>
+                                    {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -76,6 +89,7 @@
             </div>
         </div>
     </div>
+    <div id="last-refresh"></div>
     <script> const totalAppointments = "{{ total_appointments }}"; </script>
     <!-- Script JS pour la pagination -->
     <script src="{{ url_for('static', filename='pagination.js') }}"></script>
@@ -88,32 +102,123 @@
 
         // Demande une confirmation avant de supprimer le rendez-vous
         if (confirm(confirmationMessage)) {
-            // Envoie une requête DELETE à l'API pour supprimer le rendez-vous avec l'ID spécifié
+            // Envoie une requÃªte DELETE A  l'API pour supprimer le rendez-vous avec l'ID spécifié
             fetch(`/appointments/${appointmentId}`, {
                 method: 'DELETE'
             })
                 .then(response => {
                     if (response.ok) {
-                        // Recharge la page après la suppression
+                        // Recharge la page aprÃšs la suppression
                         window.location.reload();
                     } else if (response.status === 403) {
                         // Affiche un message d'erreur si la suppression est refusée
                         alert('Impossible de supprimer le rendez-vous. Le délai de suppression est écoulé.');
                     } else {
-                        // Gère les autres erreurs de suppression
+                        // GÃšre les autres erreurs de suppression
                         console.error('Erreur lors de la suppression du rendez-vous');
                     }
                 })
-                .catch(error => console.error('Erreur réseau :', error));
+                .catch(error => console.error('Erreur rÃ©seau :', error));
             }
         }
     </script>
     <script>
+        function changeStatus(appointmentId, newStatus) {
+            // Envoie une requête PATCH à l'API pour mettre à jour le statut du rendez-vous avec l'ID spécifié
+            fetch(`/update-appointment-status/${appointmentId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Recharge la page après la mise à jour
+                        window.location.reload();
+                    } else {
+                        console.error('Erreur lors de la mise à jour du statut du rendez-vous');
+                    }
+                })
+                .catch(error => console.error('Erreur réseau :', error));
+        }
+    </script>
+    <script>
         function showCalendar(date) {
-            // Vous pouvez implémenter ici la logique pour afficher un calendrier avec la date passée en paramètre
-            // Par exemple, vous pouvez utiliser une bibliothèque JavaScript comme FullCalendar.js pour afficher un calendrier interactif
+            // Vous pouvez implémenter ici la logique pour afficher un calendrier avec la date passée en paramétre
+            // Par exemple, vous pouvez utiliser une bibliothéque JavaScript comme FullCalendar.js pour afficher un calendrier interactif
             alert('Afficher le calendrier pour la date : ' + date);
         }
+    </script>
+    <script>
+    // Fonction pour rafraîchir automatiquement la page à intervalles réguliers
+    function autoRefresh() {
+    // Définir l'intervalle de rafraîchissement en millisecondes (par exemple, 5 minutes)
+    const refreshInterval = 60 * 1000; // 5 minutes
+    setInterval(function() {
+    // Recharger la page
+    location.reload();
+    }, refreshInterval);
+    }
+    // Appeler la fonction autoRefresh pour démarrer le rafraîchissement automatique
+    autoRefresh();
+    </script>
+    <script>// Fonction pour mettre à jour la date du dernier rafraîchissement
+        function updateLastRefresh() {
+            const lastRefreshElement = document.getElementById('last-refresh');
+            const currentDate = new Date();
+            lastRefreshElement.textContent = `Dernier rafraîchissement : ${currentDate.toLocaleString()}`;
+        }
+
+        // Mettre à jour la date du dernier rafraîchissement lorsque la page est chargée
+        updateLastRefresh();
+
+        // Ensuite, à chaque rafraîchissement de la page, appelez également la fonction updateLastRefresh()
+        window.addEventListener('load', function () {
+            setInterval(updateLastRefresh, refreshInterval);
+        });
+    </script>
+    <script>
+       // Fonction pour calculer l'âge à partir de la date de naissance
+        function calculateAge(dateOfBirth) {
+            // Vérifier si la date de naissance est valide
+            const dobParts = dateOfBirth.split('-');
+            const dobDay = parseInt(dobParts[0]);
+            const dobMonth = parseInt(dobParts[1]) - 1; // Mois est 0-indexé dans JavaScript
+            const dobYear = parseInt(dobParts[2]);
+
+            // Si la date est invalide, retourner NaN
+            if (isNaN(dobDay) || isNaN(dobMonth) || isNaN(dobYear)) {
+                return NaN;
+            }
+
+            const today = new Date();
+            const birthDate = new Date(dobYear, dobMonth, dobDay);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const month = today.getMonth() - birthDate.getMonth();
+            if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        // Parcourez les lignes du tableau pour calculer et afficher l'âge de chaque patient
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const dateOfBirth = row.cells[4].textContent; // Récupérer la date de naissance du patient depuis la cellule correspondante
+            const age = calculateAge(dateOfBirth); // Calculer l'âge à partir de la date de naissance
+            const ageCell = document.createElement('td'); // Créer une nouvelle cellule pour afficher l'âge
+
+            // Vérifier si l'âge est NaN (indiquant une date de naissance invalide) et afficher un message d'erreur si nécessaire
+            if (isNaN(age)) {
+                ageCell.textContent = 'Date de naissance invalide';
+            } else {
+                ageCell.textContent = age; // Ajouter l'âge calculé dans la cellule
+            }
+
+            // Insérer la cellule d'âge après la cellule de la date de naissance
+            row.cells[4].insertAdjacentElement('afterend', ageCell);
+        });
     </script>
 </body>
 </html>

@@ -13,6 +13,7 @@ table {
 /* Style pour les cellules du tableau */
 th,
 td {
+    text-align: center;
     border: 1px solid #ddd;
     padding: 8px;
 }
@@ -20,7 +21,7 @@ td {
 th {
     padding-top: 12px;
     padding-bottom: 12px;
-    text-align: left;
+    text-align: center;
     background-color: #454d55;
     /* Fond plus sombre pour les en-têtes */
     cursor: pointer;

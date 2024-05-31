@@ -66,7 +66,6 @@ class Caregiver(db.Model):
     __tablename__ = 'caregivers'
     id = db.Column(db.Integer, primary_key=True)
 
-
 class HealthProfessional(db.Model):
     __tablename__ = 'health_professionals'
     id = db.Column(db.Integer, primary_key=True)
@@ -86,10 +85,10 @@ class Appointment(db.Model):
     caregiver_id = db.Column(db.Integer, db.ForeignKey('caregivers.id'))
     caregiver = db.relationship('Caregiver', backref=db.backref('appointments', lazy=True))
     health_professional_id = db.Column(db.Integer, db.ForeignKey('health_professionals.id'))
+    status = db.Column(db.String(50))  # Ajouter une colonne pour le statut du rendez-vous
     health_professional = db.relationship('HealthProfessional', backref=db.backref('appointments', lazy=True))
 
 # La route /login gère la vérification des informations d'identification de l'utilisateur et génère un token JWT valide en cas de succès.
-
 @app.route('/login', methods=['POST'])
 def login():
     if request.method == 'POST':
@@ -110,10 +109,9 @@ def login():
     else:
         return jsonify({'error': 'Méthode non autorisée'}), 405
 
-
 # La route /protected est un exemple de route protégée qui nécessite un token JWT valide pour y accéder. La décoration @jwt_required() assure que seuls les utilisateurs authentifiés peuvent accéder à cette route.
 @app.route('/protected', methods=['GET'])
-@jwt_required()
+#@jwt_required()
 def protected():
     current_user = get_jwt_identity()
     patient_id = get_jwt_claims().get('patient_id')
@@ -134,7 +132,6 @@ def convert_date_of_birth(date_string):
             converted_date = date_obj.strftime('%d-%m-%Y')  # Format en 'DD-MM-YYYY'
             return converted_date
         except ValueError as e:
-            logging.error(f"Erreur lors de la conversion de {date_string} : {e}")
             try:
                 # Si la conversion échoue, essayez un autre format
                 date_obj = datetime.strptime(date_string, '%d-%m-%Y')
@@ -204,6 +201,28 @@ def list_health_professionals():
     # Ajoutez ici la logique pour récupérer la liste des professionnels de santé depuis la base de données
     return render_template('health_professionals.html')
 
+@app.route('/update-appointment-status/<int:appointment_id>', methods=['PATCH'])
+def update_appointment_status(appointment_id):
+    try:
+        # Récupérer le rendez-vous à partir de l'ID
+        appointment = Appointment.query.get(appointment_id)
+        if appointment:
+            # Récupérer le nouveau statut à partir des données de la requête PATCH
+            new_status = request.json.get('status')
+            if new_status:
+                # Mettre à jour le statut du rendez-vous
+                appointment.status = new_status
+                db.session.commit()
+                return jsonify({'message': 'Statut du rendez-vous mis à jour avec succès'}), 200
+            else:
+                return jsonify({'error': 'Le nouveau statut est manquant dans la requête'}), 400
+        else:
+            return jsonify({'error': 'Rendez-vous non trouvé'}), 404
+    except Exception as e:
+        # En cas d'erreur, annuler les modifications et enregistrer l'erreur dans les logs
+        db.session.rollback()
+        logging.error(f"Erreur lors de la mise à jour du statut du rendez-vous : {e}")
+        return jsonify({'error': 'Erreur lors de la mise à jour du statut du rendez-vous'}), 500
 
 @app.route('/appointments/<int:appointment_id>', methods=['DELETE'])
 def delete_appointment(appointment_id):
@@ -212,7 +231,6 @@ def delete_appointment(appointment_id):
         current_user = get_jwt_identity()
         
         # implementer la logicie de suppresion ou pas par le professionnel de santé peutqui  supprimer uniquement les rendez-vous qu'il a créés
-               
         appointment = Appointment.query.get(appointment_id)
         if appointment:
             # Vérifier si le rendez-vous peut être supprimé en fonction du délai configuré
@@ -237,7 +255,6 @@ def delete_appointment(appointment_id):
         logging.error(f"Erreur lors de la suppression du rendez-vous : {e}")
         return jsonify({'error': 'Erreur lors de la suppression du rendez-vous'}), 500
   
-
 # Route pour la page d'accueil
 @app.route('/')
 #@jwt_required()  # Cette décoration nécessite un token JWT valide pour accéder à la route
@@ -285,7 +302,7 @@ def index():
 
 # Route pour les rendez-vous à venir pour un patient spécifique
 @app.route('/upcoming-appointments/<int:patient_id>')
-@jwt_required()  # Cette décoration nécessite un token JWT valide pour accéder à la route
+#@jwt_required()  # Cette décoration nécessite un token JWT valide pour accéder à la route
 def upcoming_appointments(patient_id):
     logging.debug(f'Accès aux rendez-vous à venir pour le patient {patient_id}')
     
