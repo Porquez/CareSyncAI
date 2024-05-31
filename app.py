@@ -5,6 +5,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from sqlalchemy import extract
 from werkzeug.security import check_password_hash
 
 app = Flask(__name__)
@@ -61,6 +62,7 @@ class Patient(db.Model):
     medications = db.Column(db.String(100))
     emergency_contacts= db.Column(db.String(100))
     allergies = db.Column(db.String(100))
+    tel = db.Column(db.String(10))
 
 class Caregiver(db.Model):
     __tablename__ = 'caregivers'
@@ -162,13 +164,14 @@ def add_patient():
             medications = request.form.get('medications')
             allergies = request.form.get('allergies')
             emergency_contacts = request.form.get('emergency_contacts')
+            tel = request.form.get('tel')
             
             # Ajoutez ici la logique pour valider les données et les enregistrer dans la base de données
             # Créer une nouvelle instance de Patient
             new_patient = Patient(name=name, first_name=first_name, date_of_birth=date_of_birth, sex=sex, prefix=prefix,
                                     place_of_birth=place_of_birth, social_security_number=social_security_number,
                                     medical_history=medical_history, medications=medications,
-                                    allergies=allergies, emergency_contacts=emergency_contacts)
+                                    allergies=allergies, emergency_contacts=emergency_contacts, tel=tel)
 
             # Ajouter le patient à la base de données
             db.session.add(new_patient)
@@ -183,6 +186,31 @@ def add_patient():
             return jsonify({'error': 'Erreur lors de l\'ajout du patient'}), 500
     else:
         return jsonify({'error': 'Méthode non autorisée'}), 405
+
+@app.route('/move-appointment/<int:appointment_id>', methods=['PATCH'])
+def move_appointment(appointment_id):
+    try:
+        # Récupérer le rendez-vous à partir de l'ID
+        appointment = Appointment.query.get(appointment_id)
+        if appointment:
+            # Récupérer le nouveau planning à partir des données de la requête PATCH
+            new_planning = request.json.get('newPlanning')
+            if new_planning:
+                new_appointment_time = datetime.strptime(new_planning, '%d-%m-%Y %H:%M')
+               
+                # Mettre à jour le planning du rendez-vous avec le nouveau rendez-vous
+                appointment.appointment_time = new_appointment_time
+                db.session.commit()
+                return jsonify({'message': 'Rendez-vous déplacé avec succès vers le nouveau planning'}), 200
+            else:
+                return jsonify({'error': 'Le nouveau planning est manquant dans la requête'}), 400
+        else:
+            return jsonify({'error': 'Rendez-vous non trouvé'}), 404
+    except Exception as e:
+        # En cas d'erreur, annuler les modifications et enregistrer l'erreur dans les logs
+        db.session.rollback()
+        logging.error(f"Erreur lors du déplacement du rendez-vous : {e}")
+        return jsonify({'error': 'Erreur lors du déplacement du rendez-vous'}), 500
 
 # Route pour afficher la liste des patients
 @app.route('/patients')
@@ -260,6 +288,21 @@ def delete_appointment(appointment_id):
 #@jwt_required()  # Cette décoration nécessite un token JWT valide pour accéder à la route
 def index():
     logging.debug('Accès à la page d\'accueil')
+
+    # Récupérer les paramètres de requête pour le mois et le jour (si fournis)
+    month = request.args.get('month')
+    day = request.args.get('day')
+    
+    # Si month est fourni, filtrer les rendez-vous par mois
+    if month:
+        appointments = Appointment.query.filter(extract('month', Appointment.appointment_time) == month).order_by(Appointment.appointment_time).all()
+    # Sinon, si day est fourni, filtrer les rendez-vous par jour
+    elif day:
+        appointments = Appointment.query.filter(extract('day', Appointment.appointment_time) == day).order_by(Appointment.appointment_time).all()
+    # Sinon, récupérer tous les rendez-vous
+    else:
+        appointments = Appointment.query.order_by(Appointment.appointment_time).all()
+
     # Récupérer tous les rendez-vous triés par date du rendez-vous
     appointments = Appointment.query.order_by(Appointment.appointment_time).all()
     logging.debug(f'Nombre total de rendez-vous récupérés : {len(appointments)}')

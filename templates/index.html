@@ -18,14 +18,16 @@
                     <thead class="table-dark">
                         <tr>
                             <th scope="col" onclick="sortTable(0)">Médecin <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(1)">Nom Patient <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(2)">Prénom <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(3)">Sexe <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(4)">Date de naissance <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(5)">Age <button class="sort-btn"><i class="fa fa-sort"></i></button></th></th> 
-                            <th scope="col" onclick="sortTable(6)">Date du rendez-vous <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(7)">Heure <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
-                            <th scope="col" onclick="sortTable(8)">Statut <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(1)">Civilité <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(2)">Nom <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(3)">Prénom <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(4)">Sexe <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(5)">Date de naissance <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(6)">Age <button class="sort-btn"><i class="fa fa-sort"></i></button></th></th> 
+                            <th scope="col" onclick="sortTable(7)">Téléphone <button class="sort-btn"><i class="fa fa-sort"></i></button></th></th> 
+                            <th scope="col" onclick="sortTable(8)">Date du rendez-vous <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(9)">Heure <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
+                            <th scope="col" onclick="sortTable(10)">Statut <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
                             <th scope="col">Actions</th>
                         </tr>
                     </thead>
@@ -33,11 +35,16 @@
                         {% for appointment in appointments %}
                         <tr {% if appointment.appointment_time < now %} class="appointment-passed" {% endif %}>
                             <td>{{ appointment.health_professional_name }}</td>
+                            <td>{{ appointment.patient.prefix }}</td>
                             <td>{{ appointment.patient.name }}</td>
                             <td>{{ appointment.patient.first_name }}</td>
-                            <td>{{ appointment.patient.sex }}</td>
+                            <td>{{ appointment.patient.sex[0] }}</td>
                             <td>{{ appointment.patient.date_of_birth }}</td>
-                            <td>{{ appointment.appointment_time.strftime('%d-%m-%Y') }}</td>
+                            <td>{{ appointment.patient.tel }}</td>
+                            <!-- Modifier la cellule de date pour ajouter une classe ou un attribut de données -->
+                            <td class="appointment-date" data-date="{{ appointment.appointment_time }}">
+                                {{ appointment.appointment_time.strftime('%d-%m-%Y') }}
+                            </td>
                             <td>{{ appointment.appointment_time.strftime('%H:%M') }}</td>
                             <td>
                                 <select onchange="changeStatus('{{ appointment.id }}', this.value)">
@@ -53,9 +60,21 @@
                             <td>
                                 {% if appointment.appointment_time < now %} <i class="fa fa-flag" style="color: red;"></i> Rendez-vous dépassée
                                     {% else %} <!-- Ajouter un bouton de suppression pour les rendez-vous à venir -->
-                                    <button
-                                        onclick="deleteAppointment('{{ appointment.id }}', '{{ appointment.patient.name }}', '{{ appointment.appointment_time }}')"><i
-                                            class="fa fa-trash"></i></button>
+                                    <!-- Bouton Supprimer avec bulle d'aide -->
+                                    <!-- Bouton Supprimer Rendez-vous avec bulle d'aide -->
+                                    <button class="delete-appointment-button"
+                                        onclick="deleteAppointment('{{ appointment.id }}', '{{ appointment.patient.name }}', '{{ appointment.appointment_time }}')"
+                                        title="Supprimer le rendez-vous">
+                                        <i class="fa fa-trash"></i>
+                                        <span class="tooltip">Supprimer</span> <!-- Bulle d'aide -->
+                                    </button>
+                                    
+                                    <!-- Bouton Déplacer Rendez-vous avec bulle d'aide -->
+                                    <button class="move-appointment-button" onclick="moveAppointment('{{ appointment.id }}')"
+                                        title="Déplacer le rendez-vous">
+                                        <span class="icon"></span>
+                                        <span class="tooltip">Déplacer</span> <!-- Bulle d'aide -->
+                                    </button>
                                     {% endif %}
                             </td>
                         </tr>
@@ -95,6 +114,8 @@
     <script src="{{ url_for('static', filename='pagination.js') }}"></script>
     <!-- Inclusion du fichier JavaScript externe -->
     <script src="{{ url_for('static', filename='sort.js') }}"></script>
+    <!-- Script JS pour la pagination -->
+    <script src="{{ url_for('static', filename='moment.js') }}"></script>
     <script>
      function deleteAppointment(appointmentId, patientName, appointmentDate) {
         // Construit le message de confirmation avec les informations du rendez-vous
@@ -205,7 +226,7 @@
         // Parcourez les lignes du tableau pour calculer et afficher l'âge de chaque patient
         const rows = document.querySelectorAll('tbody tr');
         rows.forEach(row => {
-            const dateOfBirth = row.cells[4].textContent; // Récupérer la date de naissance du patient depuis la cellule correspondante
+            const dateOfBirth = row.cells[5].textContent; // Récupérer la date de naissance du patient depuis la cellule correspondante
             const age = calculateAge(dateOfBirth); // Calculer l'âge à partir de la date de naissance
             const ageCell = document.createElement('td'); // Créer une nouvelle cellule pour afficher l'âge
 
@@ -217,8 +238,42 @@
             }
 
             // Insérer la cellule d'âge après la cellule de la date de naissance
-            row.cells[4].insertAdjacentElement('afterend', ageCell);
+            row.cells[5].insertAdjacentElement('afterend', ageCell);
         });
     </script>
+  <script>
+    function moveAppointment(appointmentId) {
+        // Demander à l'utilisateur de saisir la nouvelle date et heure pour le rendez-vous
+        const newPlanning = prompt("Entrez la nouvelle date et heure pour le rendez-vous avec l'ID " + appointmentId + " (Format : JJ-MM-AAAA HH:MM):");
+        if (newPlanning != null && newPlanning.trim() !== "") {
+            // Valider le format de la date et de l'heure
+            const dateRegex = /^\d{2}-\d{2}-\d{4} \d{2}:\d{2}$/;
+            if (!dateRegex.test(newPlanning)) {
+                alert("Format de date et heure invalide. Veuillez saisir au format JJ-MM-AAAA HH:MM");
+                return;
+            }
+
+            // Envoyer une requête PATCH à l'API pour déplacer le rendez-vous vers le nouveau planning
+            fetch(`/move-appointment/${appointmentId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ newPlanning: newPlanning })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Recharger la page après le déplacement du rendez-vous
+                        window.location.reload();
+                    } else {
+                        console.error('Erreur lors du déplacement du rendez-vous');
+                    }
+                })
+                .catch(error => console.error('Erreur réseau :', error));
+        }
+    }
+</script>
+
+
 </body>
 </html>

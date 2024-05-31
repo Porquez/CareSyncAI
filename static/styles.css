@@ -81,3 +81,125 @@ tr:nth-child(odd) {
     text-align: center;
     /* Centrer le contenu de la colonne */
 }
+
+/* Style pour le bouton de suppression */
+.delete-appointment-button {
+    background-color: #ff4d4d;
+    /* Couleur de fond du bouton */
+    border: none;
+    /* Suppression de la bordure */
+    border-radius: 4px;
+    /* Bordure arrondie */
+    padding: 5px 10px;
+    /* Espacement interne du bouton */
+    cursor: pointer;
+    /* Curseur de la souris */
+    color: #fff;
+    /* Couleur du texte */
+    transition: background-color 0.3s;
+    /* Transition pour le changement de couleur au survol */
+}
+
+.delete-appointment-button:hover {
+    background-color: #ff6666;
+    /* Couleur de fond au survol */
+}
+
+/* Style pour le bouton de déplacement */
+.move-appointment-button {
+    background-color: #007bff;
+    /* Couleur de fond bleue */
+    color: #fff;
+    /* Couleur du texte blanc */
+    border: none;
+    /* Suppression de la bordure */
+    border-radius: 4px;
+    /* Bordure arrondie */
+    padding: 5px 10px;
+    /* Espacement interne du bouton */
+    cursor: pointer;
+    /* Curseur de la souris */
+    transition: background-color 0.3s;
+    /* Animation de transition pour la couleur de fond */
+}
+
+.move-appointment-button:hover {
+    background-color: #0056b3;
+    /* Couleur de fond bleue plus foncée */
+}
+
+/* Style pour l'icône dans les boutons */
+.delete-appointment-button i,
+.move-appointment-button .icon {
+    font-size: 20px;
+    /* Taille de l'icône */
+}
+
+/* Style pour la bulle d'aide */
+.tooltip {
+    visibility: hidden;
+    /* Rendre la bulle d'aide invisible par défaut */
+    background-color: #333;
+    /* Couleur de fond de la bulle d'aide */
+    color: #fff;
+    /* Couleur du texte de la bulle d'aide */
+    text-align: center;
+    /* Centrage du texte */
+    border-radius: 6px;
+    /* Bordure arrondie */
+    padding: 5px 10px;
+    /* Espacement interne */
+    position: absolute;
+    /* Position absolue pour positionner la bulle d'aide */
+    z-index: 1;
+    /* Positionner la bulle d'aide au-dessus des autres éléments */
+    bottom: 125%;
+    /* Positionner la bulle d'aide en dessous du bouton */
+    left: 50%;
+    /* Centrer la bulle d'aide horizontalement */
+    transform: translateX(-50%);
+    /* Centrer la bulle d'aide horizontalement */
+    opacity: 0;
+    /* Rendre la bulle d'aide transparente par défaut */
+    transition: opacity 0.3s;
+    /* Animation de transition pour l'apparition */
+}
+
+/* Afficher la bulle d'aide au survol du bouton */
+.delete-appointment-button:hover .tooltip,
+.move-appointment-button:hover .tooltip {
+    visibility: visible;
+    /* Rendre la bulle d'aide visible */
+    opacity: 1;
+    /* Rendre la bulle d'aide opaque */
+}
+
+/* Style pour la bulle d'aide */
+.tooltip-appointment {
+    position: relative;
+    display: inline-block;
+}
+
+/* Style pour la bulle d'aide - Texte */
+.tooltip-appointment .tooltiptext {
+    visibility: hidden;
+    width: 220px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 10px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+/* Afficher la bulle d'aide au survol */
+.tooltip-appointment:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
