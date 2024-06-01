@@ -130,7 +130,7 @@ tr:nth-child(odd) {
 
 /* Style pour l'icône dans les boutons */
 .delete-appointment-button i,
-.move-appointment-button .icon {
+.move-appointment-button i {
     font-size: 20px;
     /* Taille de l'icône */
 }

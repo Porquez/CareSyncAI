@@ -4,5 +4,11 @@
   "http_url": "http://127.0.1.1",
   "https_url": "https://127.0.1.1",
   "port": 8000,
-  "suppression_delai_heures": 24
-}
+  "suppression_delai_heures": 24,
+  "anonymization": {
+    "tables": ["patients"],
+    "columns": {
+      "patients": ["name", "first_name"]
+     } 
+  }
+} 

@@ -11,10 +11,16 @@
     {% include 'header.html' %}
     <div class="container">
         <h1 class="text-center my-5">Planning des rendez-vous</h1>
+        
+        <!-- Ajouter des champs de recherche pour chaque en-tête de colonne -->
+        <input type="text" id="filterName" data-column="0" data-type="text" placeholder="Filtrer par nmédecin...">
+        <input type="text" id="filterName" data-column="2" data-type="text" placeholder="Filtrer par patient...">
+        <input type="text" id="filterDate" data-column="8" data-type="date" placeholder="Filtrer par date de rendez-vous...">
+
         <!-- Tableau -->
         <div class="row">
             <div class="col">
-                <table class="table table-bordered text-center">
+                <table id="appointmentTable" class="table table-bordered text-center">
                     <thead class="table-dark">
                         <tr>
                             <th scope="col" onclick="sortTable(0)">Médecin <button class="sort-btn"><i class="fa fa-sort"></i></button></th>
@@ -65,14 +71,15 @@
                                     <button class="delete-appointment-button"
                                         onclick="deleteAppointment('{{ appointment.id }}', '{{ appointment.patient.name }}', '{{ appointment.appointment_time }}')"
                                         title="Supprimer le rendez-vous">
-                                        <i class="fa fa-trash"></i>
+                                        <i class="fa-arrows-alt"></i> S
                                         <span class="tooltip">Supprimer</span> <!-- Bulle d'aide -->
                                     </button>
                                     
                                     <!-- Bouton Déplacer Rendez-vous avec bulle d'aide -->
-                                    <button class="move-appointment-button" onclick="moveAppointment('{{ appointment.id }}')"
+                                    <button class="move-appointment-button" 
+                                        onclick="moveAppointment('{{ appointment.id }}')"
                                         title="Déplacer le rendez-vous">
-                                        <span class="icon"></span>
+                                        <i class="fa-arrows-alt"></i> D
                                         <span class="tooltip">Déplacer</span> <!-- Bulle d'aide -->
                                     </button>
                                     {% endif %}
@@ -116,6 +123,8 @@
     <script src="{{ url_for('static', filename='sort.js') }}"></script>
     <!-- Script JS pour la pagination -->
     <script src="{{ url_for('static', filename='moment.js') }}"></script>
+    <!-- Script JS pour les filtres -->
+    <script src="{{ url_for('static', filename='filter.js') }}"></script>
     <script>
      function deleteAppointment(appointmentId, patientName, appointmentDate) {
         // Construit le message de confirmation avec les informations du rendez-vous
@@ -123,7 +132,7 @@
 
         // Demande une confirmation avant de supprimer le rendez-vous
         if (confirm(confirmationMessage)) {
-            // Envoie une requÃªte DELETE A  l'API pour supprimer le rendez-vous avec l'ID spécifié
+            // Envoie une requête DELETE A  l'API pour supprimer le rendez-vous avec l'ID spécifié
             fetch(`/appointments/${appointmentId}`, {
                 method: 'DELETE'
             })
