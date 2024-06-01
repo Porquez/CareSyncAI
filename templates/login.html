@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login</h2>
+    <form id="loginForm">
+        <label>Username:</label>
+        <input type="text" id="username" required><br>
+        <label>Password:</label>
+        <input type="password" id="password" required><br>
+        <input type="submit" value="Login">
+    </form>
+    <p id="loginMessage"></p>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let formData = {
+                username: document.getElementById("username").value,
+                password: document.getElementById("password").value
+            };
+
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.access_token) {
+                    // Enregistrez le token JWT dans le stockage local ou les cookies
+                    localStorage.setItem('access_token', data.access_token);
+                    // Redirigez l'utilisateur vers la page principale
+                    window.location.href = '/';
+                } else {
+                    document.getElementById("loginMessage").innerText = data.error;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

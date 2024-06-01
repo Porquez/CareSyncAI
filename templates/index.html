@@ -15,7 +15,6 @@
         <!-- Ajouter des champs de recherche pour chaque en-tête de colonne -->
         <input type="text" id="filterName" data-column="0" data-type="text" placeholder="Filtrer par nmédecin...">
         <input type="text" id="filterName" data-column="2" data-type="text" placeholder="Filtrer par patient...">
-        <input type="text" id="filterDate" data-column="8" data-type="date" placeholder="Filtrer par date de rendez-vous...">
 
         <!-- Tableau -->
         <div class="row">
@@ -125,6 +124,7 @@
     <script src="{{ url_for('static', filename='moment.js') }}"></script>
     <!-- Script JS pour les filtres -->
     <script src="{{ url_for('static', filename='filter.js') }}"></script>
+    <script src="{{ url_for('static', filename='logout.js') }}"></script>
     <script>
      function deleteAppointment(appointmentId, patientName, appointmentDate) {
         // Construit le message de confirmation avec les informations du rendez-vous
@@ -138,13 +138,13 @@
             })
                 .then(response => {
                     if (response.ok) {
-                        // Recharge la page aprÃšs la suppression
+                        // Recharge la page apres la suppression
                         window.location.reload();
                     } else if (response.status === 403) {
                         // Affiche un message d'erreur si la suppression est refusée
                         alert('Impossible de supprimer le rendez-vous. Le délai de suppression est écoulé.');
                     } else {
-                        // GÃšre les autres erreurs de suppression
+                        // Gére les autres erreurs de suppression
                         console.error('Erreur lors de la suppression du rendez-vous');
                     }
                 })
@@ -231,7 +231,6 @@
             }
             return age;
         }
-
         // Parcourez les lignes du tableau pour calculer et afficher l'âge de chaque patient
         const rows = document.querySelectorAll('tbody tr');
         rows.forEach(row => {
@@ -282,7 +281,22 @@
         }
     }
 </script>
-
+<script>
+    window.addEventListener('beforeunload', function (event) {
+        // Appeler l'API /logout pour effectuer la déconnexion lorsque la fenêtre du navigateur est fermée
+        fetch('/logout', {
+            method: 'POST' // ou 'GET' selon la méthode utilisée par votre API
+        })
+            .then(response => {
+                if (response.ok) {
+                    // Ne rien faire de spécial ici, mais la déconnexion aura lieu côté serveur
+                } else {
+                    console.error('Erreur lors de la déconnexion');
+                }
+            })
+            .catch(error => console.error('Erreur réseau :', error));
+    });
+</script>
 
 </body>
 </html>

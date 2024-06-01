@@ -1,7 +1,7 @@
 import os
 import logging
 import json
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, redirect, request, jsonify, render_template, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -29,13 +29,16 @@ db_path = os.path.join(app_dir, db_filename)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 
 # Clé secrète pour la signature des t
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
+app.config['SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
 
 # Initialisez la base de données
 db = SQLAlchemy(app)
 
 # Initialisez l'extension Flask-JWT-Extended
 jwt = JWTManager(app)
+
+# Configuration de la durée de vie des cookies de session
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)  # Durée de vie des cookies de session : 10 minutes
 
 # Configuration de la journalisation
 logging.basicConfig(level=logging.DEBUG)  # Définir le niveau de journalisation sur DEBUG
@@ -90,26 +93,43 @@ class Appointment(db.Model):
     status = db.Column(db.String(50))  # Ajouter une colonne pour le statut du rendez-vous
     health_professional = db.relationship('HealthProfessional', backref=db.backref('appointments', lazy=True))
 
+@app.route('/logout', methods=['GET'])
+def logout():
+    # Supprimer le token JWT de la session
+    if 'access_token' in session:
+        session.pop('access_token', None)
+        return jsonify({'message': 'Vous avez été déconnecté avec succès.'}), 200
+    else:
+        return jsonify({'error': 'Vous n\'êtes pas connecté.'}), 401
+
 # La route /login gère la vérification des informations d'identification de l'utilisateur et génère un token JWT valide en cas de succès.
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    # Vérifier si l'utilisateur est déjà connecté
+    if 'access_token' in session:
+        # Si oui, rediriger vers la page d'accueil
+        return redirect(url_for('index'))
+
     if request.method == 'POST':
+        # Gestion de la connexion pour la méthode POST
         data = request.get_json()
         username = data.get('username')
         password = data.get('password')
         
         # Recherche de l'utilisateur dans la base de données
         user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password, password):
-            # Récupération de l'ID du patient associé à cet utilisateur
-            patient_id = user.id_patient
-            # Création du token d'accès avec l'identité de l'utilisateur et l'ID du patient comme réclamations
-            access_token = create_access_token(identity=username, user_claims={'patient_id': patient_id})
+        if user and user.password == password:
+        #if user and check_password_hash(user.password, password):
+            # Génération du token JWT avec l'identité de l'utilisateur
+            access_token = create_access_token(identity=username)
+            # Enregistrer le token dans la session
+            session['access_token'] = access_token
             return jsonify(access_token=access_token), 200
         else:
             return jsonify({'error': 'Identifiants invalides'}), 401
     else:
-        return jsonify({'error': 'Méthode non autorisée'}), 405
+        # Pour la méthode GET, renvoyer la page de connexion
+        return render_template('login.html')
 
 # La route /protected est un exemple de route protégée qui nécessite un token JWT valide pour y accéder. La décoration @jwt_required() assure que seuls les utilisateurs authentifiés peuvent accéder à cette route.
 @app.route('/protected', methods=['GET'])
@@ -253,6 +273,7 @@ def update_appointment_status(appointment_id):
         return jsonify({'error': 'Erreur lors de la mise à jour du statut du rendez-vous'}), 500
 
 @app.route('/appointments/<int:appointment_id>', methods=['DELETE'])
+@jwt_required()
 def delete_appointment(appointment_id):
     try:
         # Récupérer l'utilisateur authentifié à partir du token JWT
@@ -288,6 +309,11 @@ def delete_appointment(appointment_id):
 #@jwt_required()  # Cette décoration nécessite un token JWT valide pour accéder à la route
 def index():
     logging.debug('Accès à la page d\'accueil')
+
+    # Vérifier si un token JWT est présent dans les cookies ou le stockage local
+    if 'access_token' not in request.cookies and 'access_token' not in session:
+        # Rediriger vers la page de connexion
+        return redirect(url_for('login'))
 
     # Récupérer les paramètres de requête pour le mois et le jour (si fournis)
     month = request.args.get('month')
