@@ -2,8 +2,25 @@ DROP TABLE appointments;
 DROP TABLE patients;
 DROP TABLE health_professionals;
 DROP TABLE user;
+DROP TABLE UserConnections;
+
 
 CREATE TABLE user (id INTEGER PRIMARY KEY, username TEXT, password TEXT, role TEXT, id_patient INTEGER);
+CREATE TABLE UserConnections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    machine_name TEXT,
+    ip_address TEXT,
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    login_url TEXT,
+    status TEXT,
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(id)
+);
+
+
 CREATE TABLE patients (id INTEGER PRIMARY KEY, name TEXT, first_name TEXT, date_of_birth TEXT, sex TEXT, prefix TEXT, place_of_birth TEXT, social_security_number TEXT, medical_history TEXT, medications TEXT, allergies TEXT, emergency_contacts TEXR, tel TEXT);
 CREATE TABLE appointments (id INTEGER PRIMARY KEY, caregiver_id INTEGER, health_professional_id INTEGER, patient_id INTEGER,  appointment_time TEXT, duration TEXT, confirmed BOOLEAN, status TEXT );
 CREATE TABLE health_professionals (id INTEGER PRIMARY KEY AUTOINCREMENT, prefix TEXT, first_name TEXT, last_name TEXT, rpps INTEGER UNIQUE, name TEXT, specialty TEXT);

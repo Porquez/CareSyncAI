@@ -1,12 +1,17 @@
 import os
 import logging
 import json
+import socket
 from flask import Flask, redirect, request, jsonify, render_template, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy import extract
 from werkzeug.security import check_password_hash
+import locale
+
+# Définissez la locale en français
+locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
 
 app = Flask(__name__)
 
@@ -37,11 +42,16 @@ db = SQLAlchemy(app)
 # Initialisez l'extension Flask-JWT-Extended
 jwt = JWTManager(app)
 
-# Configuration de la durée de vie des cookies de session
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)  # Durée de vie des cookies de session : 10 minutes
-
 # Configuration de la journalisation
 logging.basicConfig(level=logging.DEBUG)  # Définir le niveau de journalisation sur DEBUG
+
+# Configuration de la durée de vie des cookies de session
+session_lifetime_minutes = config.get('security', {}).get('session_lifetime_minutes', 10)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=session_lifetime_minutes)
+
+# Affichage des données de configuration
+logging.debug('Durée de vie des cookies de session : %s minutes', session_lifetime_minutes)
+
 
 # Modèle de base de données pour stocker les informations d'identification des utilisateurs
 class User(db.Model):
@@ -51,6 +61,20 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False)  # Champ pour stocker le rôle de l'utilisateur
     id_patient = db.Column(db.Integer)
 
+class UserConnection(db.Model):
+    __tablename__ = 'UserConnections'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # Relation avec la table User
+    user = db.relationship('User', backref='connections')       # Relation pour accéder à l'utilisateur associé à la connexion
+    machine_name = db.Column(db.String(100))
+    ip_address = db.Column(db.String(100))
+    start_time = db.Column(db.DateTime)
+    end_time = db.Column(db.DateTime)
+    login_url = db.Column(db.String(200))
+    status = db.Column(db.String(20))
+    error_message = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
 class Patient(db.Model):
     __tablename__ = 'patients'
     id = db.Column(db.Integer, primary_key=True)
@@ -93,10 +117,44 @@ class Appointment(db.Model):
     status = db.Column(db.String(50))  # Ajouter une colonne pour le statut du rendez-vous
     health_professional = db.relationship('HealthProfessional', backref=db.backref('appointments', lazy=True))
 
+def log_user_disconnection(user_id, end_time):
+    # Récupérer la dernière connexion de l'utilisateur et mettre à jour l'heure de fin
+    last_connection = UserConnection.query.filter_by(user_id=user_id).order_by(UserConnection.start_time.desc()).first()
+    if last_connection:
+        last_connection.end_time = end_time
+        db.session.commit()
+    else:
+        # Si aucune connexion précédente n'a été trouvée, enregistrer un message d'erreur ou gérer le cas selon les besoins
+        logging.error("Aucune connexion précédente trouvée pour cet utilisateur.")
+
+def log_user_connection(user_id, machine_name, ip_address, start_time, end_time, login_url, status, error_message=None):
+    connection = UserConnection(user_id=user_id,
+                                machine_name=machine_name,
+                                ip_address=ip_address,
+                                start_time=start_time,
+                                end_time=end_time,
+                                login_url=login_url,
+                                status=status,
+                                error_message=error_message)
+    db.session.add(connection)
+    db.session.commit()
+
+# Créez un filtre Jinja2 pour convertir les noms des jours et des mois en français
+@app.template_filter('french_day')
+def french_day(date):
+    return date.strftime('%A %d %B %Y')
+
 @app.route('/logout', methods=['GET'])
 def logout():
-    # Supprimer le token JWT de la session
+    # Vérifier si un token JWT est présent dans la session
     if 'access_token' in session:
+        
+        # Récupérer le nom de la machine
+        machine_name = socket.gethostname()
+
+        # Enregistrer la déconnexion dans la table UserConnection
+        log_user_disconnection(user_id=None, machine_name=machine_name, ip_address=request.remote_addr, start_time=datetime.now(), end_time=datetime.now(), login_url=request.url, status="success")
+        # Supprimer le token JWT de la session
         session.pop('access_token', None)
         return jsonify({'message': 'Vous avez été déconnecté avec succès.'}), 200
     else:
@@ -118,19 +176,34 @@ def login():
         
         # Recherche de l'utilisateur dans la base de données
         user = User.query.filter_by(username=username).first()
+           
         if user and user.password == password:
         #if user and check_password_hash(user.password, password):
             # Génération du token JWT avec l'identité de l'utilisateur
             access_token = create_access_token(identity=username)
+
             # Enregistrer le token dans la session
             session['access_token'] = access_token
+
+            # Récupérer le nom de la machine
+            machine_name = socket.gethostname()
+
+            # Enregistrer les détails de connexion
+            log_user_connection(user_id=user.id, machine_name=machine_name, ip_address=request.remote_addr, start_time=datetime.now(), end_time=None, login_url=request.url, status="success")
+
             return jsonify(access_token=access_token), 200
         else:
+
+            # Récupérer le nom de la machine
+            machine_name = socket.gethostname()
+            
+            # Enregistrer les détails de connexion en cas d'échec
+            log_user_connection(user_id=None, machine_name=machine_name, ip_address=request.remote_addr, start_time=datetime.now(), end_time=None, login_url=request.url, status="failure")
             return jsonify({'error': 'Identifiants invalides'}), 401
     else:
         # Pour la méthode GET, renvoyer la page de connexion
         return render_template('login.html')
-
+ 
 # La route /protected est un exemple de route protégée qui nécessite un token JWT valide pour y accéder. La décoration @jwt_required() assure que seuls les utilisateurs authentifiés peuvent accéder à cette route.
 @app.route('/protected', methods=['GET'])
 #@jwt_required()
@@ -314,11 +387,18 @@ def index():
     if 'access_token' not in request.cookies and 'access_token' not in session:
         # Rediriger vers la page de connexion
         return redirect(url_for('login'))
-
-    # Récupérer les paramètres de requête pour le mois et le jour (si fournis)
+    
+    # Récupérer la date actuelle
+    now = datetime.now()
     month = request.args.get('month')
     day = request.args.get('day')
-    
+
+    # Calculer la date pour inclure une marge de 3 jours avant la date actuelle
+    three_days_ago = datetime.now() - timedelta(days=3)
+
+    # Calculer la date pour 30 jours à partir de la date actuelle
+    thirty_days_from_now = datetime.now() + timedelta(days=30)
+
     # Si month est fourni, filtrer les rendez-vous par mois
     if month:
         appointments = Appointment.query.filter(extract('month', Appointment.appointment_time) == month).order_by(Appointment.appointment_time).all()
@@ -327,10 +407,8 @@ def index():
         appointments = Appointment.query.filter(extract('day', Appointment.appointment_time) == day).order_by(Appointment.appointment_time).all()
     # Sinon, récupérer tous les rendez-vous
     else:
-        appointments = Appointment.query.order_by(Appointment.appointment_time).all()
-
-    # Récupérer tous les rendez-vous triés par date du rendez-vous
-    appointments = Appointment.query.order_by(Appointment.appointment_time).all()
+        # Filtrer les rendez-vous dans la fenêtre de -3 jours à +30 jours
+        appointments = Appointment.query.filter(Appointment.appointment_time >= three_days_ago, Appointment.appointment_time <= thirty_days_from_now).order_by(Appointment.appointment_time).all()
     logging.debug(f'Nombre total de rendez-vous récupérés : {len(appointments)}')
     
     # Convertir la date de naissance pour chaque patient associé à un rendez-vous
@@ -367,7 +445,7 @@ def index():
         health_professional_name = None
     
     # Rendre le modèle HTML avec la liste des rendez-vous, le nom du médecin et le nombre total de rendez-vous
-    return render_template('index.html', appointments=appointments, total_appointments=total_appointments, now=now, health_professional_name=health_professional_name)
+    return render_template('index.html', appointments=appointments, total_appointments=total_appointments, now=now, health_professional_name=health_professional_name, min_date=three_days_ago, max_date=thirty_days_from_now)
 
 # Route pour les rendez-vous à venir pour un patient spécifique
 @app.route('/upcoming-appointments/<int:patient_id>')

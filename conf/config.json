@@ -10,5 +10,8 @@
     "columns": {
       "patients": ["name", "first_name"]
      } 
+  },
+  "security": {
+    "session_lifetime_minutes": 1
   }
 } 

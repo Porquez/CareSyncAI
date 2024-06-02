@@ -10,8 +10,14 @@
     <!-- Entête -->
     {% include 'header.html' %}
     <div class="container">
-        <h1 class="text-center my-5">Planning des rendez-vous</h1>
-        
+        <!-- Modifier le libellé pour inclure la plage de dates -->
+      
+        <h1 class="text-center my-5">Planning des rendez-vous du
+            <span style="color: blue;">{{ min_date | french_day }}</span>
+            au
+            <span style="color: blue;">{{ max_date | french_day }}</span>
+        </h1>
+
         <!-- Ajouter des champs de recherche pour chaque en-tête de colonne -->
         <input type="text" id="filterName" data-column="0" data-type="text" placeholder="Filtrer par nmédecin...">
         <input type="text" id="filterName" data-column="2" data-type="text" placeholder="Filtrer par patient...">
