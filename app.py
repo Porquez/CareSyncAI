@@ -116,7 +116,7 @@ class Appointment(db.Model):
     health_professional_id = db.Column(db.Integer, db.ForeignKey('health_professionals.id'))
     status = db.Column(db.String(50))  # Ajouter une colonne pour le statut du rendez-vous
     health_professional = db.relationship('HealthProfessional', backref=db.backref('appointments', lazy=True))
-
+    
 def log_user_disconnection(user_id, end_time):
     # Récupérer la dernière connexion de l'utilisateur et mettre à jour l'heure de fin
     last_connection = UserConnection.query.filter_by(user_id=user_id).order_by(UserConnection.start_time.desc()).first()
@@ -294,6 +294,7 @@ def move_appointment(appointment_id):
                 # Mettre à jour le planning du rendez-vous avec le nouveau rendez-vous
                 appointment.appointment_time = new_appointment_time
                 db.session.commit()
+                db.session.commit()
                 return jsonify({'message': 'Rendez-vous déplacé avec succès vers le nouveau planning'}), 200
             else:
                 return jsonify({'error': 'Le nouveau planning est manquant dans la requête'}), 400
@@ -321,6 +322,31 @@ def list_health_professionals():
     logging.debug('Accès à la liste des professionnels de santé')
     # Ajoutez ici la logique pour récupérer la liste des professionnels de santé depuis la base de données
     return render_template('health_professionals.html')
+
+@app.route('/create-appointments', methods=['POST'])
+def create_appointment():
+    try:
+        new_planning = request.json.get('newPlanning')
+        patient_id = request.json.get('patientId')
+        health_professional_id = request.json.get('healthProfessionalId')
+        if new_planning and patient_id and health_professional_id:
+            new_appointment_time = datetime.strptime(new_planning, '%d-%m-%Y %H:%M')
+            patient = Patient.query.get(patient_id)
+            health_professional = HealthProfessional.query.get(health_professional_id)
+            if patient and health_professional:
+                new_appointment = Appointment(appointment_time=new_appointment_time, patient=patient, health_professional=health_professional)
+                db.session.add(new_appointment)
+                db.session.commit()
+                return jsonify({'message': 'Rendez-vous créé avec succès'}), 201
+            else:
+                return jsonify({'error': 'Patient ou professionnel de santé non trouvé'}), 404
+        else:
+            return jsonify({'error': 'Données manquantes dans la requête'}), 400
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Erreur lors de la création du rendez-vous : {e}")
+        return jsonify({'error': 'Erreur lors de la création du rendez-vous'}), 500
+
 
 @app.route('/update-appointment-status/<int:appointment_id>', methods=['PATCH'])
 def update_appointment_status(appointment_id):
@@ -354,6 +380,9 @@ def delete_appointment(appointment_id):
         
         # implementer la logicie de suppresion ou pas par le professionnel de santé peutqui  supprimer uniquement les rendez-vous qu'il a créés
         appointment = Appointment.query.get(appointment_id)
+        
+        logging.debug(f'Delete_appointment: {appointment}')
+
         if appointment:
             # Vérifier si le rendez-vous peut être supprimé en fonction du délai configuré
             suppression_delai_heures = config.get('suppression_delai_heures', 24)

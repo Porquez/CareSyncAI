@@ -11,7 +11,6 @@
     {% include 'header.html' %}
     <div class="container">
         <!-- Modifier le libellé pour inclure la plage de dates -->
-      
         <h1 class="text-center my-5">Planning des rendez-vous du
             <span style="color: blue;">{{ min_date | french_day }}</span>
             au
@@ -49,7 +48,7 @@
                             <td>{{ appointment.patient.prefix }}</td>
                             <td>{{ appointment.patient.name }}</td>
                             <td>{{ appointment.patient.first_name }}</td>
-                            <td>{{ appointment.patient.sex[0] }}</td>
+                            <td>{{ appointment.patient.sex }}</td>
                             <td>{{ appointment.patient.date_of_birth }}</td>
                             <td>{{ appointment.patient.tel }}</td>
                             <!-- Modifier la cellule de date pour ajouter une classe ou un attribut de données -->
@@ -86,6 +85,14 @@
                                         title="Déplacer le rendez-vous">
                                         <i class="fa-arrows-alt"></i> D
                                         <span class="tooltip">Déplacer</span> <!-- Bulle d'aide -->
+                                    </button>
+
+                                    <!-- Bouton Création de rendez-vous avec bulle d'aide -->
+                                    <button class="create-appointment-button"
+                                        onclick="createAppointment('{{ appointment.health_professional_id }}', '{{ appointment.patient_id }}')"
+                                        style="background-color: green;" title="Créer un nouveau rendez-vous">
+                                        <i class="fa-arrows-alt"></i> C
+                                        <span class="tooltip">Créer</span> <!-- Bulle d'aide -->
                                     </button>
                                     {% endif %}
                             </td>
@@ -132,29 +139,46 @@
     <script src="{{ url_for('static', filename='filter.js') }}"></script>
     <script src="{{ url_for('static', filename='logout.js') }}"></script>
     <script>
-     function deleteAppointment(appointmentId, patientName, appointmentDate) {
-        // Construit le message de confirmation avec les informations du rendez-vous
-        const confirmationMessage = `Confirmez-vous la suppression du rendez-vous pour ${patientName} le ${appointmentDate} ?`;
+        function deleteAppointment(appointmentId, patientName, appointmentDate) {
+            // Construit le message de confirmation avec les informations du rendez-vous
+            const confirmationMessage = `Confirmez-vous la suppression du rendez-vous pour ${patientName} le ${appointmentDate} ?`;
 
-        // Demande une confirmation avant de supprimer le rendez-vous
-        if (confirm(confirmationMessage)) {
-            // Envoie une requête DELETE A  l'API pour supprimer le rendez-vous avec l'ID spécifié
-            fetch(`/appointments/${appointmentId}`, {
-                method: 'DELETE'
-            })
-                .then(response => {
-                    if (response.ok) {
-                        // Recharge la page apres la suppression
-                        window.location.reload();
-                    } else if (response.status === 403) {
-                        // Affiche un message d'erreur si la suppression est refusée
-                        alert('Impossible de supprimer le rendez-vous. Le délai de suppression est écoulé.');
-                    } else {
-                        // Gére les autres erreurs de suppression
-                        console.error('Erreur lors de la suppression du rendez-vous');
-                    }
+            // Demande une confirmation avant de supprimer le rendez-vous
+            if (confirm(confirmationMessage)) {
+                // Récupérer le token JWT stocké dans localStorage
+                const token = localStorage.getItem('jwtToken');
+
+                // Vérifier si le token JWT est disponible
+                if (!token) {
+                    // Gérer le cas où le token est absent ou null
+                    console.error('Aucun token JWT n\'a été trouvé dans le localStorage');
+                    return;
+                }
+
+                // En-têtes de la requête DELETE avec le token JWT inclus
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token // Inclure le token JWT dans l'en-tête Authorization
+                };
+
+                // Envoie une requête DELETE à l'API pour supprimer le rendez-vous avec l'ID spécifié
+                fetch(`/appointments/${appointmentId}`, {
+                    method: 'DELETE',
+                    headers: headers // Inclure les en-têtes dans la requête
                 })
-                .catch(error => console.error('Erreur rÃ©seau :', error));
+                    .then(response => {
+                        if (response.ok) {
+                            // Recharge la page après la suppression
+                            window.location.reload();
+                        } else if (response.status === 403) {
+                            // Affiche un message d'erreur si la suppression est refusée
+                            alert('Impossible de supprimer le rendez-vous. Le délai de suppression est écoulé.');
+                        } else {
+                            // Gère les autres erreurs de suppression
+                            console.error('Erreur lors de la suppression du rendez-vous');
+                        }
+                    })
+                    .catch(error => console.error('Erreur réseau :', error));
             }
         }
     </script>
@@ -281,6 +305,37 @@
                         window.location.reload();
                     } else {
                         console.error('Erreur lors du déplacement du rendez-vous');
+                    }
+                })
+                .catch(error => console.error('Erreur réseau :', error));
+        }
+    }
+</script>
+<script>
+   function createAppointment(patientId, healthProfessionalId) {
+        const newPlanning = prompt("Entrez la date et l'heure pour le nouveau rendez-vous (Format : JJ-MM-AAAA HH:MM):");
+        if (newPlanning != null && newPlanning.trim() !== "") {
+            const dateRegex = /^\d{2}-\d{2}-\d{4} \d{2}:\d{2}$/;
+            if (!dateRegex.test(newPlanning)) {
+                alert("Format de date et heure invalide. Veuillez saisir au format JJ-MM-AAAA HH:MM");
+                return;
+            }
+            fetch('/create-appointments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    newPlanning: newPlanning,
+                    patientId: patientId,
+                    healthProfessionalId: healthProfessionalId
+                })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        console.error('Erreur lors de la création du rendez-vous');
                     }
                 })
                 .catch(error => console.error('Erreur réseau :', error));

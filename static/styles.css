@@ -203,3 +203,20 @@ tr:nth-child(odd) {
     visibility: visible;
     opacity: 1;
 }
+
+/* styles.css */
+.menu {
+    display: flex;
+    justify-content: flex-end;
+    /* Alignement des éléments à droite */
+    align-items: center;
+    /* Alignement vertical des éléments au centre */
+    padding: 10px;
+    /* Espacement intérieur pour les boutons */
+}
+
+/* Style supplémentaire pour les boutons si nécessaire */
+.menu button {
+    margin-left: 10px;
+    /* Espacement entre les boutons */
+}
