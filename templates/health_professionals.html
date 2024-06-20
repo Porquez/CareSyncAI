@@ -1,15 +1,45 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste des professionnels de santé</title>
+    <title>Liste des professionnels de Santé</title>
     <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
 </head>
+
 <body>
+    {% include 'menu.html' %}
     <div class="container">
-        <h1 class="text-center my-5">Liste des professionnels de sant�</h1>
-        <!-- Ajoutez ici le contenu de la liste des professionnels de santé -->
+        <h1 class="text-center my-5">Liste des professionnels de santé</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Qualité</th>
+                    <th scope="col">Nom</th>
+                    <th scope="col">Prénom</th>
+                    <th scope="col">RPPS</th>
+                    <th scope="col">Nom complet</th>
+                    <th scope="col">Spécialité</th>
+                    <!-- Ajoutez ici toutes les autres colonnes de votre table -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for professional in professionals %}
+                <tr>
+                    <td>{{ professional.id }}</td>
+                    <td>{{ professional.prefix }}</td>
+                    <td>{{ professional.last_name }}</td>
+                    <td>{{ professional.first_name }}</td>
+                    <td>{{ professional.rpps }}</td>
+                    <td>{{ professional.name }}</td>
+                    <td>{{ professional.specialty }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </body>
+
 </html>

@@ -1,49 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles_login.css') }}">
 </head>
+
 <body>
-    <h2>Login</h2>
-    <form id="loginForm">
-        <label>Username:</label>
-        <input type="text" id="username" required><br>
-        <label>Password:</label>
-        <input type="password" id="password" required><br>
-        <input type="submit" value="Login">
-    </form>
-    <p id="loginMessage"></p>
-
-    <script>
-        document.getElementById("loginForm").addEventListener("submit", function(event) {
-            event.preventDefault();
-            let formData = {
-                username: document.getElementById("username").value,
-                password: document.getElementById("password").value
-            };
-
-            fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.access_token) {
-                    // Enregistrez le token JWT dans le stockage local ou les cookies
-                    localStorage.setItem('access_token', data.access_token);
-                    // Redirigez l'utilisateur vers la page principale
-                    window.location.href = '/';
-                } else {
-                    document.getElementById("loginMessage").innerText = data.error;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        });
-    </script>
+    <main class="login-container">
+        <header>
+            <h1>Explorez CareSync AI</h1>
+            <p>La suite logicielle dédiée aux patients, créée pour répondre à vos besoins spécifiques et vous
+                accompagner dans votre quotidien.</p>
+        </header>
+        <section>
+            <form id="loginForm" method="POST">
+                {{ form.hidden_tag() }}
+                <label for="username" class="form-label">Nom d'utilisateur:</label>
+                {{ form.username(class="form-input") }}<br>
+                <label for="password" class="form-label">Mot de passe:</label>
+                <div class="password-container">
+                    {{ form.password(class="form-input") }}
+                    <button type="button" id="togglePassword" class="toggle-password">Afficher</button>
+                </div>
+                {{ form.submit(class="form-submit") }}
+            </form>
+            <p id="loginMessage" class="alert-message"></p>
+            <p id="alertMessage" class="alert-message" style="display: none;">Le délai d'inactivité maximal est dépassé.
+                Pour des raisons de sécurité, vous devez vous authentifier de nouveau.</p>
+            <p id="sessionCountdown" class="session-countdown"></p>
+        </section>
+        <section>
+            <button id="showSignupForm" class="form-submit">Créer un compte</button>
+            <form id="signupForm" style="display: none;">
+                <label for="signupUsername" class="form-label">Nom d'utilisateur:</label>
+                <input type="text" id="signupUsername" name="signupUsername" class="form-input" required><br>
+                <label for="signupPassword" class="form-label">Mot de passe:</label>
+                <input type="password" id="signupPassword" name="signupPassword" class="form-input" required><br>
+                <label for="signupRole" class="form-label">Rôle:</label>
+                <select id="signupRole" name="signupRole" class="form-input" required>
+                    <option value="Administrateur">Administrateur</option>
+                    <option value="Soignant">Soignant</option>
+                    <option value="Médecin">Médecin</option>
+                    <option value="Patient">Patient</option>
+                </select><br>
+                <input type="submit" value="Créer un compte" class="form-submit">
+            </form>
+            <p id="signupMessage" class="alert-message"></p>
+        </section>
+    </main>
+    <footer class="footer">
+        <div class="footer-logo">
+            <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Logo CareSync AI">
+            <span style="color: blue;">CareSync AI</span>, la Révolution de la Gestion des Soins de Santé
+        </div>
+    </footer>
+    <p id="last-refresh"></p>
+    <script src="{{ url_for('static', filename='scripts_login.js') }}"></script>
 </body>
+
 </html>

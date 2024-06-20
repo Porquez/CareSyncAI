@@ -56,5 +56,5 @@ function filterDate(dateString, filterString) {
     return true; // All components match
 }
 // Appeler la fonction de filtrage lors de la saisie dans les champs de recherche
-document.getElementById("filterName").addEventListener("input", filterTable);
-document.getElementById("filterDate").addEventListener("input", filterTable);
+document.getElementById("Filtre_health_professional_name").addEventListener("input", filterTable);
+document.getElementById("Filtre_name").addEventListener("input", filterTable);

@@ -1,0 +1,98 @@
+body {
+    background-color: #f2f2f2;
+    font-family: Arial, sans-serif;
+}
+
+.login-container {
+    border: 2px solid #000;
+    /* Définir la couleur et l'épaisseur du cadre */
+    padding: 20px;
+    /* Ajouter du padding pour l'espace interne */
+    border-radius: 10px;
+    /* Ajouter des coins arrondis */
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    /* Ajouter une ombre pour un effet de profondeur */
+    max-width: 400px;
+    /* Définir une largeur maximale pour le conteneur */
+    margin: auto;
+    /* Centrer le conteneur horizontalement */
+    background-color: #fff;
+    /* Ajouter une couleur de fond pour le conteneur */
+}
+
+.login-container {
+    border: 2px solid #000; /* Définir la couleur et l'épaisseur du cadre */
+    padding: 20px; /* Ajouter du padding pour l'espace interne */
+    border-radius: 10px; /* Ajouter des coins arrondis */
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); /* Ajouter une ombre pour un effet de profondeur */
+    max-width: 400px; /* Définir une largeur maximale pour le conteneur */
+    margin: auto; /* Centrer le conteneur horizontalement */
+    background-color: #fff; /* Ajouter une couleur de fond pour le conteneur */
+}
+
+h2 {
+    text-align: center;
+    color: #333;
+}
+
+p {
+    text-align: center;
+    color: #666;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-input {
+    width: calc(100% - 10px);
+    margin-bottom: 10px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    transition: border-color 0.3s;
+}
+
+.form-input:focus {
+    border-color: #4caf50;
+    outline: none;
+}
+
+.form-submit {
+    width: 100%;
+    padding: 10px;
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.form-submit:hover {
+    background-color: #45a049;
+}
+
+.footer {
+    margin-top: 20px;
+    text-align: center;
+    color: #666;
+    position: relative;
+}
+
+.footer-logo {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background-color: #ccc;
+    padding: 10px;
+    margin-left: 10px;
+}
+
+.alert-message {
+    text-align: center;
+    color: red;
+    margin-top: 10px;
+}

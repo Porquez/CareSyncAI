@@ -1,8 +1,8 @@
 {
   "app_dir": "/home/syst/CareSyncAI",
   "db_filename": "care_sync.db",
-  "http_url": "http://127.0.1.1",
-  "https_url": "https://127.0.1.1",
+  "http_url": "http://127.0.0.1",
+  "https_url": "https://127.0.0.1",
   "port": 8000,
   "suppression_delai_heures": 24,
   "anonymization": {
@@ -12,6 +12,7 @@
      } 
   },
   "security": {
-    "session_lifetime_minutes": 1
+    "session_lifetime_minutes": 1,
+    "login_attempts_limit": "5 per minute"
   }
 } 

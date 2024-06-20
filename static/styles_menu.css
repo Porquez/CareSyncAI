@@ -1,0 +1,41 @@
+/* Styles spécifiques pour le menu */
+
+.navbar-brand {
+    font-size: 1.5rem;
+    /* Taille de police pour la marque */
+}
+
+.navbar-nav .nav-link {
+    padding: 1rem 2rem;
+    /* Espacement intérieur des liens */
+    font-size: 1.2rem;
+    /* Taille de police des liens */
+    font-weight: bold;
+    /* Gras */
+    color: #fff;
+    /* Couleur du texte */
+    transition: color 0.3s;
+    /* Transition fluide pour le changement de couleur */
+}
+
+.navbar-nav .nav-link:hover {
+    color: #ffc107;
+    /* Couleur du texte au survol */
+}
+
+.navbar-nav {
+    width: 100%;
+    /* Largeur totale */
+}
+
+.navbar-nav .nav-link {
+    text-align: center;
+    /* Centrer le texte */
+}
+
+@media (max-width: 768px) {
+    .navbar-nav .nav-link {
+        text-align: left;
+        /* Aligner à gauche pour les petits écrans */
+    }
+}

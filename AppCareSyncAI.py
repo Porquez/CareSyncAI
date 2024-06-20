@@ -3,7 +3,14 @@ import logging
 import json
 import socket
 from flask import Flask, redirect, request, jsonify, render_template, session, url_for
+from flask_limiter.util import get_remote_address  # Import this function
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired
 from flask_sqlalchemy import SQLAlchemy
+from flask_limiter import Limiter
+from flask_bcrypt import Bcrypt
+from flask_wtf import CSRFProtect
 from datetime import datetime, timedelta
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy import extract
@@ -16,7 +23,7 @@ locale.setlocale(locale.LC_TIME, "fr_FR.UTF-8")
 app = Flask(__name__)
 
 # Lecture du fichier de configuration JSON
-config_path = os.path.join(os.getcwd(), 'conf', 'config.json')
+config_path = os.path.join(os.getcwd(), 'conf', 'ConfCareSyncAI.json')
 with open(config_path, 'r') as config_file:
     config = json.load(config_file)
 
@@ -33,8 +40,9 @@ db_path = os.path.join(app_dir, db_filename)
 # Configuration de l'URI de base de données avec le chemin complet
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 
-# Clé secrète pour la signature des t
+# Clé secrète pour la signature 
 app.config['SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
+app.secret_key = app.config['SECRET_KEY'] 
 
 # Initialisez la base de données
 db = SQLAlchemy(app)
@@ -42,12 +50,28 @@ db = SQLAlchemy(app)
 # Initialisez l'extension Flask-JWT-Extended
 jwt = JWTManager(app)
 
+# cryptage password
+bcrypt = Bcrypt(app)
+
+csrf = CSRFProtect(app)
+
+# Gestion des Sessions gestion de la durée de vie des cookies et la sécurité des sessions :
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)
+
 # Configuration de la journalisation
 logging.basicConfig(level=logging.DEBUG)  # Définir le niveau de journalisation sur DEBUG
 
 # Configuration de la durée de vie des cookies de session
 session_lifetime_minutes = config.get('security', {}).get('session_lifetime_minutes', 10)
+login_attempts_limit = config['security']['login_attempts_limit']
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=session_lifetime_minutes)
+
+# Configurer les limitations de connexion
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=[login_attempts_limit]  # Utilise la limite définie dans le fichier de configuration
+)
+limiter.init_app(app)
 
 # Affichage des données de configuration
 logging.debug('Durée de vie des cookies de session : %s minutes', session_lifetime_minutes)
@@ -57,14 +81,14 @@ logging.debug('Durée de vie des cookies de session : %s minutes', session_lifet
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # Champ pour stocker le rôle de l'utilisateur
+    password = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
     id_patient = db.Column(db.Integer)
 
 class UserConnection(db.Model):
     __tablename__ = 'UserConnections'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # Relation avec la table User
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))   # Relation avec la table User
     user = db.relationship('User', backref='connections')       # Relation pour accéder à l'utilisateur associé à la connexion
     machine_name = db.Column(db.String(100))
     ip_address = db.Column(db.String(100))
@@ -89,7 +113,7 @@ class Patient(db.Model):
     medications = db.Column(db.String(100))
     emergency_contacts= db.Column(db.String(100))
     allergies = db.Column(db.String(100))
-    tel = db.Column(db.String(10))
+    phone = db.Column(db.String(20))
 
 class Caregiver(db.Model):
     __tablename__ = 'caregivers'
@@ -116,7 +140,13 @@ class Appointment(db.Model):
     health_professional_id = db.Column(db.Integer, db.ForeignKey('health_professionals.id'))
     status = db.Column(db.String(50))  # Ajouter une colonne pour le statut du rendez-vous
     health_professional = db.relationship('HealthProfessional', backref=db.backref('appointments', lazy=True))
-    
+
+
+class LoginForm(FlaskForm):
+    username = StringField('Nom d\'utilisateur', validators=[DataRequired()])
+    password = PasswordField('Mot de passe', validators=[DataRequired()])
+    submit = SubmitField('Connexion')
+
 def log_user_disconnection(user_id, end_time):
     # Récupérer la dernière connexion de l'utilisateur et mettre à jour l'heure de fin
     last_connection = UserConnection.query.filter_by(user_id=user_id).order_by(UserConnection.start_time.desc()).first()
@@ -139,10 +169,40 @@ def log_user_connection(user_id, machine_name, ip_address, start_time, end_time,
     db.session.add(connection)
     db.session.commit()
 
+@app.route('/favicon.ico')
+def favicon():
+    return redirect(url_for('static', filename='favicon.ico'))
+
 # Créez un filtre Jinja2 pour convertir les noms des jours et des mois en français
 @app.template_filter('french_day')
 def french_day(date):
     return date.strftime('%A %d %B %Y')
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    role = data.get('role')
+
+    if not username or not password or not role:
+        return jsonify({"error": "Tous les champs sont requis"}), 400
+
+    # Vérifier si l'utilisateur existe déjà
+    if User.query.filter_by(username=username).first():
+        return jsonify({'error': 'Utilisateur déjà existant'}), 409
+
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    new_user = User(username=username, password=hashed_password, role=role)
+
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({"message": "Compte créé avec succès"})
+    except Exception as e:
+        return jsonify({"error": "Erreur lors de la création du compte. Veuillez réessayer."}), 500
+
 
 @app.route('/logout', methods=['GET'])
 def logout():
@@ -160,50 +220,40 @@ def logout():
     else:
         return jsonify({'error': 'Vous n\'êtes pas connecté.'}), 401
 
-# La route /login gère la vérification des informations d'identification de l'utilisateur et génère un token JWT valide en cas de succès.
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # Vérifier si l'utilisateur est déjà connecté
-    if 'access_token' in session:
-        # Si oui, rediriger vers la page d'accueil
-        return redirect(url_for('index'))
+    try:
+        # Vérifier si l'utilisateur est déjà connecté
+        if 'access_token' in session:
+            return redirect(url_for('index'))
 
-    if request.method == 'POST':
-        # Gestion de la connexion pour la méthode POST
-        data = request.get_json()
-        username = data.get('username')
-        password = data.get('password')
-        
-        # Recherche de l'utilisateur dans la base de données
-        user = User.query.filter_by(username=username).first()
-           
-        if user and user.password == password:
-        #if user and check_password_hash(user.password, password):
-            # Génération du token JWT avec l'identité de l'utilisateur
-            access_token = create_access_token(identity=username)
+        form = LoginForm()
+        if form.validate_on_submit():
+            username = form.username.data
+            password = form.password.data
 
-            # Enregistrer le token dans la session
-            session['access_token'] = access_token
-
-            # Récupérer le nom de la machine
-            machine_name = socket.gethostname()
-
-            # Enregistrer les détails de connexion
-            log_user_connection(user_id=user.id, machine_name=machine_name, ip_address=request.remote_addr, start_time=datetime.now(), end_time=None, login_url=request.url, status="success")
-
-            return jsonify(access_token=access_token), 200
-        else:
-
-            # Récupérer le nom de la machine
-            machine_name = socket.gethostname()
+            # Recherche de l'utilisateur dans la base de données
+            user = User.query.filter_by(username=username).first()
             
-            # Enregistrer les détails de connexion en cas d'échec
-            log_user_connection(user_id=None, machine_name=machine_name, ip_address=request.remote_addr, start_time=datetime.now(), end_time=None, login_url=request.url, status="failure")
-            return jsonify({'error': 'Identifiants invalides'}), 401
-    else:
-        # Pour la méthode GET, renvoyer la page de connexion
-        return render_template('login.html')
- 
+            if user and bcrypt.check_password_hash(user.password, password):
+                logging.debug('Mot de passe vérifié avec succès')
+                access_token = create_access_token(identity=username)
+                session['access_token'] = access_token
+
+                machine_name = socket.gethostname()
+                log_user_connection(user_id=user.id, machine_name=machine_name, ip_address=request.remote_addr, start_time=datetime.now(), end_time=None, login_url=request.url, status="success")
+                
+                return jsonify(access_token=access_token), 200
+            else:
+                machine_name = socket.gethostname()
+                log_user_connection(user_id=None, machine_name=machine_name, ip_address=request.remote_addr, start_time=datetime.now(), end_time=None, login_url=request.url, status="failure")
+                return jsonify({'error': 'Identifiants invalides'}), 401
+        else:
+            return render_template('login.html', form=form, session_lifetime_minutes=session_lifetime_minutes)
+    except Exception as e:
+        logging.error(f'Erreur lors de la connexion : {e}')
+        return jsonify({'error': 'Erreur de connexion. Veuillez réessayer.'}), 500
+    
 # La route /protected est un exemple de route protégée qui nécessite un token JWT valide pour y accéder. La décoration @jwt_required() assure que seuls les utilisateurs authentifiés peuvent accéder à cette route.
 @app.route('/protected', methods=['GET'])
 #@jwt_required()
@@ -257,14 +307,14 @@ def add_patient():
             medications = request.form.get('medications')
             allergies = request.form.get('allergies')
             emergency_contacts = request.form.get('emergency_contacts')
-            tel = request.form.get('tel')
+            phone = request.form.get('phone')
             
             # Ajoutez ici la logique pour valider les données et les enregistrer dans la base de données
             # Créer une nouvelle instance de Patient
             new_patient = Patient(name=name, first_name=first_name, date_of_birth=date_of_birth, sex=sex, prefix=prefix,
                                     place_of_birth=place_of_birth, social_security_number=social_security_number,
                                     medical_history=medical_history, medications=medications,
-                                    allergies=allergies, emergency_contacts=emergency_contacts, tel=tel)
+                                    allergies=allergies, emergency_contacts=emergency_contacts, phone=phone)
 
             # Ajouter le patient à la base de données
             db.session.add(new_patient)
@@ -320,8 +370,10 @@ def list_patients():
 @app.route('/health_professionals')
 def list_health_professionals():
     logging.debug('Accès à la liste des professionnels de santé')
-    # Ajoutez ici la logique pour récupérer la liste des professionnels de santé depuis la base de données
-    return render_template('health_professionals.html')
+    # Récupérez la liste des professionnels de santé depuis la base de données
+    professionals = HealthProfessional.query.all()
+    # Passez les données récupérées au template
+    return render_template('health_professionals.html', professionals=professionals)
 
 @app.route('/create-appointments', methods=['POST'])
 def create_appointment():
@@ -394,10 +446,15 @@ def delete_appointment(appointment_id):
                 # Si le délai est écoulé, renvoyer un message d'erreur
                 return jsonify({'error': f'Impossible de supprimer le rendez-vous. Le délai de suppression est écoulé.'}), 403
             else:
-                # Supprimer le rendez-vous de la base de données
-                db.session.delete(appointment)
-                db.session.commit()
-                return jsonify({'message': 'Rendez-vous supprimé avec succès'}), 200
+                
+                # Exemple de vérification si l'utilisateur peut supprimer cet rendez-vous
+                if appointment.created_by != current_user:
+                    return jsonify({'error': 'Vous n\'avez pas les permissions pour supprimer ce rendez-vous'}), 403       
+                else:
+                    # Supprimer le rendez-vous de la base de données
+                    db.session.delete(appointment)
+                    db.session.commit()
+                    return jsonify({'message': 'Rendez-vous supprimé avec succès'}), 200
         else:
             return jsonify({'error': 'Rendez-vous non trouvé'}), 404
     except Exception as e:

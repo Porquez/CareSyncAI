@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Création d'un nouveau patient</title>
+    <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
+</head>
+
+<body>
+    {% include 'menu.html' %}
+    <div class="container">
+        <h1 class="text-center my-5">Création d'un nouveau patient</h1>
+        <form action="/add_patient" method="post">
+            <div class="form-group">
+                <label for="name">Nom :</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="first_name">Prénom :</label>
+                <input type="text" class="form-control" id="first_name" name="first_name" required>
+            </div>
+            <div class="form-group">
+                <label for="date_of_birth">Date de naissance :</label>
+                <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" required>
+            </div>
+            <div class="form-group">
+                <label for="sex">Sexe :</label>
+                <select class="form-control" id="sex" name="sex" required>
+                    <option value="M">Masculin</option>
+                    <option value="F">Féminin</option>
+                    <option value="O">Autre</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="social_security_number">Numéro de sécurité sociale :</label>
+                <input type="text" class="form-control" id="social_security_number" name="social_security_number" required>
+            </div>
+            <!-- Ajoutez ici les autres champs du formulaire selon vos besoins -->
+            <button type="submit" class="btn btn-primary">Créer</button>
+        </form>
+    </div>
+</body>
+
+</html>

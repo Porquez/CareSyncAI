@@ -1,26 +1,54 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
+ <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Planning des rendez-vous</title>
     <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
+    <!-- Ajoutez le lien vers votre favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css">
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
+    <!-- FullCalendar CSS and JS -->
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.min.css' rel='stylesheet' />
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.9.0/fullcalendar.min.js'></script>
 </head>
 <body class="dark-mode">
     <!-- Entête -->
     {% include 'header.html' %}
+    <!-- Menu -->
+    {% include 'menu.html' %}
     <div class="container">
-        <!-- Modifier le libellé pour inclure la plage de dates -->
-        <h1 class="text-center my-5">Planning des rendez-vous du
+        <h1 class="text-center my-5">Liste des rendez-vous du
             <span style="color: blue;">{{ min_date | french_day }}</span>
             au
             <span style="color: blue;">{{ max_date | french_day }}</span>
         </h1>
-
-        <!-- Ajouter des champs de recherche pour chaque en-tête de colonne -->
-        <input type="text" id="filterName" data-column="0" data-type="text" placeholder="Filtrer par nmédecin...">
-        <input type="text" id="filterName" data-column="2" data-type="text" placeholder="Filtrer par patient...">
-
+        <div class="row mb-3">
+            <div class="col">
+                <form id="calendarForm">
+                    <label for="calendarDate">Sélectionner une date :</label>
+                    <input type="date" id="calendarDate" name="calendarDate">
+                    <button type="submit">Afficher le calendrier</button>
+                </form>
+            </div>
+        </div>
+        <!-- Ajout des champs de recherche pour chaque en-tête de colonne -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <input type="text" id="Filtre_health_professional_name" data-column="0" data-type="text"
+                    placeholder="Filtrer par médecin...">
+            </div>
+            <div class="col-md-6">
+                <input type="text" id="Filtre_name" data-column="2" data-type="text" placeholder="Filtrer par patient...">
+            </div>
+        </div>
         <!-- Tableau -->
         <div class="row">
             <div class="col">
@@ -41,65 +69,145 @@
                             <th scope="col">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for appointment in appointments %}
-                        <tr {% if appointment.appointment_time < now %} class="appointment-passed" {% endif %}>
-                            <td>{{ appointment.health_professional_name }}</td>
-                            <td>{{ appointment.patient.prefix }}</td>
-                            <td>{{ appointment.patient.name }}</td>
-                            <td>{{ appointment.patient.first_name }}</td>
-                            <td>{{ appointment.patient.sex }}</td>
-                            <td>{{ appointment.patient.date_of_birth }}</td>
-                            <td>{{ appointment.patient.tel }}</td>
-                            <!-- Modifier la cellule de date pour ajouter une classe ou un attribut de données -->
-                            <td class="appointment-date" data-date="{{ appointment.appointment_time }}">
-                                {{ appointment.appointment_time.strftime('%d-%m-%Y') }}
-                            </td>
-                            <td>{{ appointment.appointment_time.strftime('%H:%M') }}</td>
-                            <td>
-                                <select onchange="changeStatus('{{ appointment.id }}', this.value)">
-                                    <option value="A venir" {% if appointment.status=='A venir' %} selected {% endif %}>A venir</option>
-                                    <option value="Absent non-excusé" {% if appointment.status=='Absent non-excusé' %} selected {% endif %}>Absent
-                                        non-excusé</option>
-                                    <option value="Absent excusé" {% if appointment.status=='Absent excusé' %} selected {% endif %}>Absent excusé
-                                    </option>
-                                    <option value="Vu" {% if appointment.status=='Vu' %} selected {% endif %}>Vu</option>
-                                     <option value="En salle d'attente" {% if appointment.status=='En salle d\' attente' %} selected {% endif %}>En salle d'attente</option>
-                                </select>
-                            </td>
-                            <td>
-                                {% if appointment.appointment_time < now %} <i class="fa fa-flag" style="color: red;"></i> Rendez-vous dépassée
-                                    {% else %} <!-- Ajouter un bouton de suppression pour les rendez-vous à venir -->
-                                    <!-- Bouton Supprimer avec bulle d'aide -->
-                                    <!-- Bouton Supprimer Rendez-vous avec bulle d'aide -->
-                                    <button class="delete-appointment-button"
-                                        onclick="deleteAppointment('{{ appointment.id }}', '{{ appointment.patient.name }}', '{{ appointment.appointment_time }}')"
-                                        title="Supprimer le rendez-vous">
-                                        <i class="fa-arrows-alt"></i> S
-                                        <span class="tooltip">Supprimer</span> <!-- Bulle d'aide -->
-                                    </button>
-                                    
-                                    <!-- Bouton Déplacer Rendez-vous avec bulle d'aide -->
-                                    <button class="move-appointment-button" 
-                                        onclick="moveAppointment('{{ appointment.id }}')"
-                                        title="Déplacer le rendez-vous">
-                                        <i class="fa-arrows-alt"></i> D
-                                        <span class="tooltip">Déplacer</span> <!-- Bulle d'aide -->
-                                    </button>
+                <tbody>
+                {% for appointment in appointments %}
+                <tr {% if appointment.appointment_time < now %} class="appointment-passed" {% endif %}>
+                    <td>{{ appointment.health_professional_name }}</td>
+                    <td>{{ appointment.patient.prefix }}</td>
+                    <td>{{ appointment.patient.name }}</td>
+                    <td>{{ appointment.patient.first_name }}</td>
+                    <td>{{ appointment.patient.sex }}</td>
+                    <td>{{ appointment.patient.date_of_birth }}</td>
+                    <td>{{ appointment.patient.phone }}</td>
+                    <td class="appointment-date" data-date="{{ appointment.appointment_time }}">
+                        {{ appointment.appointment_time.strftime('%d-%m-%Y') }}
+                    </td>
+                    <td>{{ appointment.appointment_time.strftime('%H:%M') }}</td>
+                    <td>
+                        <select onchange="changeStatus('{{ appointment.id }}', this.value)">
+                            <option value="A venir" {% if appointment.status=='A venir' %} selected {% endif %}>A venir</option>
+                            <option value="Absent non-excusé" {% if appointment.status=='Absent non-excusé' %} selected {% endif %}>
+                                Absent
+                                non-excusé</option>
+                            <option value="Absent excusé" {% if appointment.status=='Absent excusé' %} selected {% endif %}>Absent
+                                excusé
+                            </option>
+                            <option value="Vu" {% if appointment.status=='Vu' %} selected {% endif %}>Vu</option>
+                            <option value="En salle d'attente" {% if appointment.status=='En salle d\' attente' %} selected {% endif %}>
+                                En salle
+                                d'attente</option>
+                            <option value="Non vérifié" {% if appointment.status=='Non vérifié' %} selected {% endif %}>Non vérifié
+                            </option>
+                        </select>
+                    </td>
+                    <td>
+                        {% if appointment.appointment_time < now %} <button class="confirm-appointment-button"
+                            onclick="confirmAppointment('{{ appointment.id }}')" title="Confirmer le rendez-vous">
+                            <i class="fa fa-check"></i> Confirmer
+                            </button>
+                            <i class="fa fa-flag" style="color: red;"></i> Rendez-vous dépassé
+                            {% else %}
+                            <form id="deleteForm_{{ appointment.id }}"
+                                onsubmit="event.preventDefault(); deleteAppointment('{{ appointment.id }}');">
+                                <button class="delete-appointment-button" type="submit" title="Supprimer le rendez-vous">
+                                    <i class="fa fa-trash"></i> Supprimer
+                                </button>
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            </form>
+                            <button class="move-appointment-button" onclick="moveAppointment('{{ appointment.id }}')"
+                                title="Déplacer le rendez-vous">
+                                <i class="fa fa-arrows-alt"></i> Déplacer
+                            </button>
+                            {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
 
-                                    <!-- Bouton Création de rendez-vous avec bulle d'aide -->
-                                    <button class="create-appointment-button"
-                                        onclick="createAppointment('{{ appointment.health_professional_id }}', '{{ appointment.patient_id }}')"
-                                        style="background-color: green;" title="Créer un nouveau rendez-vous">
-                                        <i class="fa-arrows-alt"></i> C
-                                        <span class="tooltip">Créer</span> <!-- Bulle d'aide -->
-                                    </button>
-                                    {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
+                </tbody>
                 </table>
+                <!-- Script pour initialiser DataTables -->
+                <script>
+                    $(document).ready(function () {
+                        $('#appointmentTable').DataTable({
+                            "paging": true,
+                            "searching": false,
+                            "info": true,
+                            "autoWidth": false,
+                            "order": []
+                        });
+
+                        $('#calendarForm').on('submit', function (event) {
+                            event.preventDefault();
+                            var date = $('#calendarDate').val();
+                            window.location.href = '/calendrier?date=' + date;
+                        });
+
+                        function sortTable(n) {
+                            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+                            table = document.getElementById("appointmentTable");
+                            switching = true;
+                            dir = "asc";
+                            while (switching) {
+                                switching = false;
+                                rows = table.rows;
+                                for (i = 1; i < (rows.length - 1); i++) {
+                                    shouldSwitch = false;
+                                    x = rows[i].getElementsByTagName("TD")[n];
+                                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                                    if (dir == "asc") {
+                                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                                            shouldSwitch = true;
+                                            break;
+                                        }
+                                    } else if (dir == "desc") {
+                                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                                            shouldSwitch = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (shouldSwitch) {
+                                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                                    switching = true;
+                                    switchcount++;
+                                } else {
+                                    if (switchcount == 0 && dir == "asc") {
+                                        dir = "desc";
+                                        switching = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        window.changeStatus = function (appointmentId, newStatus) {
+                            $.ajax({
+                                url: '/update_status',
+                                method: 'POST',
+                                data: { appointmentId: appointmentId, newStatus: newStatus },
+                                success: function (response) {
+                                    location.reload();
+                                },
+                                error: function (error) {
+                                    alert('Erreur lors de la mise à jour du statut.');
+                                }
+                            });
+                        };
+
+                        window.confirmAppointment = function (appointmentId) {
+                            $.ajax({
+                                url: '/confirm_appointment',
+                                method: 'POST',
+                                data: { appointmentId: appointmentId },
+                                success: function (response) {
+                                    location.reload();
+                                },
+                                error: function (error) {
+                                    alert('Erreur lors de la confirmation du rendez-vous.');
+                                }
+                            });
+                        };
+                    });
+                </script>
             </div>
         </div>
         <!-- Pagination -->
@@ -128,80 +236,43 @@
         </div>
     </div>
     <div id="last-refresh"></div>
+    <!-- Inclusion du fichier Moment.js -->
     <script> const totalAppointments = "{{ total_appointments }}"; </script>
     <!-- Script JS pour la pagination -->
     <script src="{{ url_for('static', filename='pagination.js') }}"></script>
     <!-- Inclusion du fichier JavaScript externe -->
     <script src="{{ url_for('static', filename='sort.js') }}"></script>
     <!-- Script JS pour la pagination -->
-    <script src="{{ url_for('static', filename='moment.js') }}"></script>
     <!-- Script JS pour les filtres -->
     <script src="{{ url_for('static', filename='filter.js') }}"></script>
     <script src="{{ url_for('static', filename='logout.js') }}"></script>
+    <script src="{{ url_for('static', filename='manageappointment.js') }}"></script>
+    <div id="calendar"></div>
     <script>
-        function deleteAppointment(appointmentId, patientName, appointmentDate) {
-            // Construit le message de confirmation avec les informations du rendez-vous
-            const confirmationMessage = `Confirmez-vous la suppression du rendez-vous pour ${patientName} le ${appointmentDate} ?`;
-
-            // Demande une confirmation avant de supprimer le rendez-vous
-            if (confirm(confirmationMessage)) {
-                // Récupérer le token JWT stocké dans localStorage
-                const token = localStorage.getItem('jwtToken');
-
-                // Vérifier si le token JWT est disponible
-                if (!token) {
-                    // Gérer le cas où le token est absent ou null
-                    console.error('Aucun token JWT n\'a été trouvé dans le localStorage');
-                    return;
-                }
-
-                // En-têtes de la requête DELETE avec le token JWT inclus
-                const headers = {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token // Inclure le token JWT dans l'en-tête Authorization
-                };
-
-                // Envoie une requête DELETE à l'API pour supprimer le rendez-vous avec l'ID spécifié
-                fetch(`/appointments/${appointmentId}`, {
-                    method: 'DELETE',
-                    headers: headers // Inclure les en-têtes dans la requête
-                })
-                    .then(response => {
-                        if (response.ok) {
-                            // Recharge la page après la suppression
-                            window.location.reload();
-                        } else if (response.status === 403) {
-                            // Affiche un message d'erreur si la suppression est refusée
-                            alert('Impossible de supprimer le rendez-vous. Le délai de suppression est écoulé.');
-                        } else {
-                            // Gère les autres erreurs de suppression
-                            console.error('Erreur lors de la suppression du rendez-vous');
-                        }
+        $(document).ready(function () {
+            $('#calendar').fullCalendar({
+                events: '/api/getAppointments',
+                editable: true,  // Rendre les événements éditables (pour le glisser-déposer)
+                eventDrop: function (event) {
+                    // Logique de mise à jour du rendez-vous après déplacement
+                    fetch(`/move-appointment/${event.id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ newPlanning: event.start.format() })
                     })
-                    .catch(error => console.error('Erreur réseau :', error));
-            }
-        }
-    </script>
-    <script>
-        function changeStatus(appointmentId, newStatus) {
-            // Envoie une requête PATCH à l'API pour mettre à jour le statut du rendez-vous avec l'ID spécifié
-            fetch(`/update-appointment-status/${appointmentId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ status: newStatus })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        // Recharge la page après la mise à jour
-                        window.location.reload();
-                    } else {
-                        console.error('Erreur lors de la mise à jour du statut du rendez-vous');
-                    }
-                })
-                .catch(error => console.error('Erreur réseau :', error));
-        }
+                        .then(response => {
+                            if (response.ok) {
+                                window.location.reload();
+                            } else {
+                                console.error('Erreur lors du déplacement du rendez-vous');
+                            }
+                        })
+                        .catch(error => console.error('Erreur réseau :', error));
+                }
+            });
+        });
     </script>
     <script>
         function showCalendar(date) {
@@ -209,19 +280,6 @@
             // Par exemple, vous pouvez utiliser une bibliothéque JavaScript comme FullCalendar.js pour afficher un calendrier interactif
             alert('Afficher le calendrier pour la date : ' + date);
         }
-    </script>
-    <script>
-    // Fonction pour rafraîchir automatiquement la page à intervalles réguliers
-    function autoRefresh() {
-    // Définir l'intervalle de rafraîchissement en millisecondes (par exemple, 5 minutes)
-    const refreshInterval = 60 * 1000; // 5 minutes
-    setInterval(function() {
-    // Recharger la page
-    location.reload();
-    }, refreshInterval);
-    }
-    // Appeler la fonction autoRefresh pour démarrer le rafraîchissement automatique
-    autoRefresh();
     </script>
     <script>// Fonction pour mettre à jour la date du dernier rafraîchissement
         function updateLastRefresh() {
@@ -279,69 +337,6 @@
             row.cells[5].insertAdjacentElement('afterend', ageCell);
         });
     </script>
-  <script>
-    function moveAppointment(appointmentId) {
-        // Demander à l'utilisateur de saisir la nouvelle date et heure pour le rendez-vous
-        const newPlanning = prompt("Entrez la nouvelle date et heure pour le rendez-vous avec l'ID " + appointmentId + " (Format : JJ-MM-AAAA HH:MM):");
-        if (newPlanning != null && newPlanning.trim() !== "") {
-            // Valider le format de la date et de l'heure
-            const dateRegex = /^\d{2}-\d{2}-\d{4} \d{2}:\d{2}$/;
-            if (!dateRegex.test(newPlanning)) {
-                alert("Format de date et heure invalide. Veuillez saisir au format JJ-MM-AAAA HH:MM");
-                return;
-            }
-
-            // Envoyer une requête PATCH à l'API pour déplacer le rendez-vous vers le nouveau planning
-            fetch(`/move-appointment/${appointmentId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ newPlanning: newPlanning })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        // Recharger la page après le déplacement du rendez-vous
-                        window.location.reload();
-                    } else {
-                        console.error('Erreur lors du déplacement du rendez-vous');
-                    }
-                })
-                .catch(error => console.error('Erreur réseau :', error));
-        }
-    }
-</script>
-<script>
-   function createAppointment(patientId, healthProfessionalId) {
-        const newPlanning = prompt("Entrez la date et l'heure pour le nouveau rendez-vous (Format : JJ-MM-AAAA HH:MM):");
-        if (newPlanning != null && newPlanning.trim() !== "") {
-            const dateRegex = /^\d{2}-\d{2}-\d{4} \d{2}:\d{2}$/;
-            if (!dateRegex.test(newPlanning)) {
-                alert("Format de date et heure invalide. Veuillez saisir au format JJ-MM-AAAA HH:MM");
-                return;
-            }
-            fetch('/create-appointments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    newPlanning: newPlanning,
-                    patientId: patientId,
-                    healthProfessionalId: healthProfessionalId
-                })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        console.error('Erreur lors de la création du rendez-vous');
-                    }
-                })
-                .catch(error => console.error('Erreur réseau :', error));
-        }
-    }
-</script>
 <script>
     window.addEventListener('beforeunload', function (event) {
         // Appeler l'API /logout pour effectuer la déconnexion lorsque la fenêtre du navigateur est fermée
@@ -358,6 +353,21 @@
             .catch(error => console.error('Erreur réseau :', error));
     });
 </script>
+<script>
+    $(document).ready(function () {
+            // Gérer la soumission du formulaire pour afficher le calendrier
+            $('#calendarForm').submit(function (event) {
+                event.preventDefault(); // Empêcher le rechargement de la page par défaut
+                const selectedDate = $('#calendarDate').val(); // Récupérer la date sélectionnée
 
+                // Initialiser ou recharger le calendrier avec la date sélectionnée
+                $('#calendar').fullCalendar({
+                    defaultDate: selectedDate, // Définir la date par défaut sur celle sélectionnée
+                    editable: true,  // Rendre les événements éditables (si nécessaire)
+                    events: '/api/getAppointments' // Charger les événements pour cette date (s'il y en a)
+                });
+            });
+        });
+</script>
 </body>
 </html>
